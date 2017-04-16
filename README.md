@@ -20,23 +20,23 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
 
 # Files
 * DiscordPoster/__init__.py
- * Dunno if this is needed
+  * Dunno if this is needed
 * DiscordPoster/settings.json
- * The settings of the bot: The server ID, bot Token, and team code
+  * The settings of the bot: The server ID, bot Token, and team code
 * DiscordPoster/testPost.py
- * A file to test posting to Discord.  Scheduled for removal
+  * A file to test posting to Discord.  Scheduled for removal
 * BaseballConsumer/__init__.py
- * Needed to be able to import other files in the directory I think...
+  * Needed to be able to import other files in the directory I think...
 * BaseballConsumer/MainEntryBot.py
- * Run this to run the bot.  Want to move it to the DiscordPoster directory, but need to be able to import BaseballConsumer.py.  I don't know how to import across directories in Python
+  * Run this to run the bot.  Want to move it to the DiscordPoster directory, but need to be able to import BaseballConsumer.py.  I don't know how to import across directories in Python
 * BaseballConsumer/BaseballConsumer.py
- * The controller for checking if there is a game event update.  It finds the URL for the game on gameday, then calls  	game_events_parser.py to parse the data from gd2.mlb.com.  If there is an update, it posts it to discord and logs the event.
+  * The controller for checking if there is a game event update.  It finds the URL for the game on gameday, then calls  	game_events_parser.py to parse the data from gd2.mlb.com.  If there is an update, it posts it to discord and logs the event.
 * BaseballConsumer/game_events_parser.py
- * Parses the game events (atbats and actions) from gd2.mlb.com/.../game_events.json
+  * Parses the game events (atbats and actions) from gd2.mlb.com/.../game_events.json
 * BaseballConsumer/linescore_parser.py
- * Parses the linescore (team name/runs/hits/errors) from gd2.mlb.com/.../linescore.json
+  * Parses the linescore (team name/runs/hits/errors) from gd2.mlb.com/.../linescore.json
 * BaseballConsumer/timecheck.py
- * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
+  * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
 4-16-17
