@@ -39,7 +39,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
-4-16-17
-  The bot works!  Currently posts all game events, and when the game starts/ends
-3-11-17
-  Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
+* 4-16-17
+  * The bot works!  Currently posts all game events, and when the game starts/ends
+* 3-11-17
+  * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
