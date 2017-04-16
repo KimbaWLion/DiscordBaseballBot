@@ -19,13 +19,13 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
 4. run MainEntryBot.py
 
 # Files
-* DiscordPoster/__init__.py
+* DiscordPoster/\_\_init\_\_.py
   * Dunno if this is needed
 * DiscordPoster/settings.json
   * The settings of the bot: The server ID, bot Token, and team code
 * DiscordPoster/testPost.py
   * A file to test posting to Discord.  Scheduled for removal
-* BaseballConsumer/__init__.py
+* BaseballConsumer/\_\_init_\_\.py
   * Needed to be able to import other files in the directory I think...
 * BaseballConsumer/MainEntryBot.py
   * Run this to run the bot.  Want to move it to the DiscordPoster directory, but need to be able to import BaseballConsumer.py.  I don't know how to import across directories in Python
