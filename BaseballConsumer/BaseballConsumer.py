@@ -262,17 +262,28 @@ class BaseballUpdaterBot:
         id = linescore['status']['game_status_id']
         gameStatus = linescore['status']['game_status']
         if (gameStatus == "Game Over") and (id not in idsOfPrevEvents):
-            print(gameStatus == "Game Over" or gameStatus == "Final" and (id not in idsOfPrevEvents))
-            print(id)
-            print(idsOfPrevEvents)
             self.printGameStatusToLog(id, gameStatus)
+            metsWLRecord = self.getMetsWLRecord(linescore)
+            otherTeamWLRecord = self.getOtherTeamWLRecord(linescore)
             if self.areMetsWinning(linescore):
                 # TCB url 'https://www.youtube.com/watch?v=mmwic9kFx2c'
-                em = (discord.Embed(title='Put it in the books!', description='Mets win!'),
+                title = 'Put it in the books!'
+                description = '{} ({}-{}) beat the {} ({}-{}) by a score of {}-{}!'.format(
+                    metsWLRecord[0], metsWLRecord[1], metsWLRecord[2],
+                    otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
+                    linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
+                )
+                em = (discord.Embed(title=title, description=description),
                       'https://www.youtube.com/watch?v=mmwic9kFx2c')
             else:
-                em = (discord.Embed(title='Mets defeated', description='Clearly 100% Terry\'s fault'),
-                      '[Mets W-L record or something')
+                title = 'Mets defeated'
+                description = '{} ({}-{}) were defeated by the {} ({}-{}) by a score of {}-{}'.format(
+                    metsWLRecord[0], metsWLRecord[1], metsWLRecord[2],
+                    otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
+                    linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
+                )
+                em = (discord.Embed(title=title, description=description),
+                      'Better luck next time!')
             return em
         return None
 
@@ -282,6 +293,23 @@ class BaseballUpdaterBot:
         metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
         return (metsAreHomeTeam and (homeTeamRuns > awayTeamRuns)) or \
                (not metsAreHomeTeam and (homeTeamRuns < awayTeamRuns))
+
+    def getMetsWLRecord(self, linescore):
+        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        return self.getWLRecord(linescore, metsAreHomeTeam)
+
+    def getOtherTeamWLRecord(self, linescore):
+        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        return self.getWLRecord(linescore, not metsAreHomeTeam)
+
+    def getWLRecord(self, linescore, homeOrAway):
+        if homeOrAway:
+            return (linescore['home_team_name']['team_name'],
+                    linescore['home_team_record']['team_wins'], linescore['home_team_record']['team_losses'])
+        else:
+            return (linescore['away_team_name']['team_name'],
+                    linescore['away_team_record']['team_wins'], linescore['away_team_record']['team_losses'])
+
 
 if __name__ == '__main__':
     baseballUpdaterBot = BaseballUpdaterBot()
