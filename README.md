@@ -39,9 +39,19 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 4-27-17
+  * Added bases status to the linescore
+  * Fixed the "Game started" message since it was only tracking the Warm Up.  Now there's a "Game about to start" and "Game started" message
+  * Make sure that the linescore and game event are in sync.  Checking this by checking if the batter is the same.  Probably could fail with a stolen base attempt or wild pitch.
+  * Fixed team records in win/loss message
+  * MIKE TROUT BOT - Turned the bot into Mike Trout Bot where the bot fawns over how wonderful Mike Trout
 * 4-23-17
   * Added team records to the game ended embed
 * 4-16-17
   * The bot works!  Currently posts all game events, and when the game starts/ends
 * 3-11-17
   * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
+
+# Buglog
+* 4-27-17
+  * Managers' challenges break the bot (if they overturn the call) for some reason.  I put it in a try catch that ignores the exception in these cases.  No clue why it's failing.
