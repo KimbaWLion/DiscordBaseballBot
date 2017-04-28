@@ -21,6 +21,7 @@ import json
 import logging
 import aiohttp
 import discord
+import random
 import asyncio
 
 GAME_THREAD_LOG = r'<Path to game_thread.now>'
@@ -69,6 +70,36 @@ class BaseballUpdaterBot:
             atbat['topOrBot'], atbat['inning'], atbat['balls'], atbat['strikes'],
             atbat['outs'] ,atbat['result'], atbat['description'])
 
+    def formatMikeTroutisms(self, description):
+        if "Mike Trout" in description:
+            mikeTroutism = [
+                "Isn't Mike Trout just like, the cutest?",
+                "<3 Mike Trout <3",
+                "<3 Mike Trout <3",
+                "OMG, did you see Mike run?  He's like, so fast!",
+                "I could lay down and listen to Mike tell me the weather for hours...",
+                "Fuck, Marry, Kill.  Mike Trout, Mike Trout, and not Mike Trout.  Go",
+                "I'd swim upstream to spawn with Mike Trout.",
+                ":) Trout-y :)",
+                ":) Trout-y :)",
+                "Seeing Mike Trout play makes me feel everything is right with the world.",
+                "No one hits like Mike Trout, matches wits like Mike Trout, in a spitting match nobody spits like Mike Trout...",
+                "It's a bird!  It's a plane!  No, it's Mike Trout!",
+                "I just wanna hug Mike Trout, he looks so squishy.",
+                "9 out of 10 destists recommend Mike Trout.",
+                "Mike Trout allows children to eat ice cream for breakfast.",
+                "Mike Trout's like my favorite player ever.",
+                "Gimme a M-I-K-E!  Gimme a T-R-O-U-T!  What does that spell?!?!?",
+                "Mike Trout always tips his taxi drivers",
+                "Mike Trout 2020!",
+                "Mike Trout always did his chores and made his bed before playing video games as a kid.",
+                "Did you know that tuortekim is Mike Trout backwards?",
+                "Robbing homeruns and catches at his shoestrings,\nScoring RBIs guaranteed with one swing,\nNot being injured from shoddy hamstrings,\nMike Trout does a few of my favorite things."
+            ]
+            return random.choice(mikeTroutism)
+        return ""
+
+
     def formatAtBatForDiscord(self, atbat, linescore):
         # return "|!{}|testNYM|!{}|testHits|testErrors|  \n  |!{} Outs |testPHI|!{}|testHits|testErrors|\n \n" \
         #        "Last Play:  On a !{}-!{} count, !{} \n \n !{} Use atbat[result] to play around with the result." \
@@ -80,19 +111,23 @@ class BaseballUpdaterBot:
         return "```" \
                "{}\n" \
                "{}{}" \
-               "```".format(self.formatLinescoreForDiscord(atbat, linescore),
-                            self.formatPitchCount(atbat['gameEvent'],atbat['balls'],atbat['strikes']),
-                            atbat['description'])
+               "```\n" \
+               "{}".format(self.formatLinescoreForDiscord(atbat, linescore),
+                           self.formatPitchCount(atbat['gameEvent'],atbat['balls'],atbat['strikes']),
+                           atbat['description'],
+                           self.formatMikeTroutisms(atbat['description']))
 
     def formatLinescoreForDiscord(self, atbat, linescore):
-        return "         ┌───┬──┬──┬──┐\n" \
-               "{} {:>2}   │{}│{:>2}│{:>2}│{:>2}│\n" \
-               "         ├───┼──┼──┼──┤\n" \
-               "{}   │{}│{:>2}│{:>2}│{:>2}│\n" \
+        return "{} {:>2}   ┌───┬──┬──┬──┐\n" \
+               "   {}     |{:<3}│{:>2}│{:>2}│{:>2}│\n" \
+               "  {} {}    ├───┼──┼──┼──┤\n" \
+               "{}   │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
                "         └───┴──┴──┴──┘".format(
             atbat['topOrBot'], atbat['inning'],
+            self.formatSecondBase(linescore['status']['runnerOnBaseStatus']),
             linescore['away_team_name']['team_abbrev'], linescore['away_team_stats']['team_runs'],
             linescore['away_team_stats']['team_hits'], linescore['away_team_stats']['team_errors'],
+            self.formatThirdBase(linescore['status']['runnerOnBaseStatus']), self.formatFirstBase(linescore['status']['runnerOnBaseStatus']),
             self.formatOuts(atbat['outs']),
             linescore['home_team_name']['team_abbrev'], linescore['home_team_stats']['team_runs'],
             linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors']
@@ -102,6 +137,21 @@ class BaseballUpdaterBot:
         outOrOuts = " Outs"
         if outs is "1": outOrOuts = "  Out"
         return "".join([outs, outOrOuts])
+
+    def formatSecondBase(self, runnerOnBaseStatus):
+        if runnerOnBaseStatus in ("2", "4", "6", "7"):
+            return "●"
+        return "○"
+
+    def formatThirdBase(self, runnerOnBaseStatus):
+        if runnerOnBaseStatus in ("3", "5", "6", "7"):
+            return "●"
+        return "○"
+
+    def formatFirstBase(self, runnerOnBaseStatus):
+        if runnerOnBaseStatus in ("1", "4", "5", "7"):
+            return "●"
+        return "○"
 
     def formatPitchCount(self, gameEvent, balls, strikes):
         if gameEvent is 'atbat': return "On a {}-{} count, ".format(balls, strikes)
@@ -196,7 +246,10 @@ class BaseballUpdaterBot:
 
             try:
                 for d in directories:
-                    #d = "http://gd2.mlb.com/components/game/mlb/year_2017/month_04/day_10/gid_2017_04_10_nynmlb_phimlb_1/"
+
+                    # Comment out this line to hard code a directory
+                    #d = "http://gd2.mlb.com/components/game/mlb/year_2017/month_04/day_26/gid_2017_04_26_oakmlb_anamlb_1/"
+
                     linescore_url = "".join([d ,"linescore.json"])
                     print("[{}] Searching the linescore URL for updates: {}".format(self.getTime(), linescore_url))
                     if not await linescoreParser.doesJSONExistYet(linescore_url):
@@ -205,9 +258,7 @@ class BaseballUpdaterBot:
                     linescoreJSON = await linescoreParser.getJSONFromURL(linescore_url)
                     linescore = linescoreParser.parseGameDataIntoMap(linescoreJSON)
 
-                    game_events_url = "".join([d ,"game_events.json"]) # get game_events from the game
-                    # print "[{}] !!! Using a hard coded URL right now for testing !!!".format(self.getTime())
-                    # game_events_url = "http://gd2.mlb.com/components/game/mlb/year_2017/month_04/day_02/gid_2017_04_02_chnmlb_slnmlb_1/game_events.json"
+                    game_events_url = "".join([d ,"game_events.json"])
                     print("[{}] Searching the game URL for updates: {}".format(self.getTime(), game_events_url))
                     if not await gameEventsParser.doesJSONExistYet(game_events_url):
                         print("[{}] Game has not started".format(self.getTime()))
@@ -218,6 +269,10 @@ class BaseballUpdaterBot:
                         continue
                     listOfGameEvents = gameEventsParser.getListOfGameEvents(gameEventsParser.getInnings(gameEventsJSON))
 
+                    # Check if warmup started
+                    gameWarmupEmbed = self.checkIfWarmupStatus(linescore, idsOfPrevEvents)
+                    if gameWarmupEmbed is not None: await client.send_message(channel, embed=gameWarmupEmbed)
+
                     # Check if game started
                     gameStartedEmbed = self.checkIfGameStartedStatus(linescore, idsOfPrevEvents)
                     if gameStartedEmbed is not None: await client.send_message(channel, embed=gameStartedEmbed)
@@ -225,11 +280,8 @@ class BaseballUpdaterBot:
                     # Check if new game event
                     for gameEvent in listOfGameEvents:
                         id = gameEvent['id'] if gameEvent['id'] is not None else "NoIdInJSONFile"
-                        if id not in idsOfPrevEvents:
+                        if id not in idsOfPrevEvents and self.linescoreAndGameEventsInSync(linescore, gameEventsParser.getCurrentBatter(gameEventsJSON)):
                             self.printToLog(gameEvent)
-                            # Only use embeds if it's a win!
-                            #em = discord.Embed(title='My Embed Title', description='My Embed Content.')
-                            #em.set_author(name='Someone', icon_url=client.user.default_avatar_url)
                             await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
                             idsOfPrevEvents = self.getEventIdsFromLog()
 
@@ -243,18 +295,38 @@ class BaseballUpdaterBot:
                     idsOfPrevEvents = self.getEventIdsFromLog()
             except Exception as ex:
                 logging.exception("Exception occured")
-                pass
+                await client.send_message(channel, "Bot encountered an error.  Was there a review on the field?")
 
             time.sleep(10)
 
         print("/*------------- End of Bot.run() -------------*/")
 
-    def checkIfGameStartedStatus(self, linescore, idsOfPrevEvents):
+    def linescoreAndGameEventsInSync(self, linescore, gameEventsCurrentBatterId):
+        if linescore['currentPlayers'] is None:
+            return True
+        linescoreCurrentBatterId = linescore['currentPlayers']['batter']['id']
+        if gameEventsCurrentBatterId == linescoreCurrentBatterId:
+            return True
+        return False
+
+    def checkIfWarmupStatus(self, linescore, idsOfPrevEvents):
         id = linescore['status']['game_status_id']
         gameStatus = linescore['status']['game_status']
         if (gameStatus == "Warmup") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
-            em = discord.Embed(title='Play ball!', description='Mets game has started.')
+            #em = discord.Embed(title='Game\'s about to start, everyone get in here!', description='HYPE HYPE HYPE HYPE.')
+            em = discord.Embed(title='Game\'s about to start, everyone get in here!',
+                               description='Aren\'t Mike Trout\'s eyes just dreamy?')
+            return em
+        return None
+
+    def checkIfGameStartedStatus(self, linescore, idsOfPrevEvents):
+        id = linescore['status']['game_status_id']
+        gameStatus = linescore['status']['game_status']
+        if (gameStatus == "In Progress") and (id not in idsOfPrevEvents):
+            self.printGameStatusToLog(id, gameStatus)
+            #em = discord.Embed(title='Play ball!', description='Mets game has started.')
+            em = discord.Embed(title='Play ball!', description='Mike Trout\'s butt is on the field, you best be watching!')
             return em
         return None
 
@@ -290,16 +362,19 @@ class BaseballUpdaterBot:
     def areMetsWinning(self, linescore):
         homeTeamRuns = linescore['home_team_stats']['team_runs']
         awayTeamRuns = linescore['away_team_stats']['team_runs']
-        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        #metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "LAA")
         return (metsAreHomeTeam and (homeTeamRuns > awayTeamRuns)) or \
                (not metsAreHomeTeam and (homeTeamRuns < awayTeamRuns))
 
     def getMetsWLRecord(self, linescore):
-        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        #metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "LAA")
         return self.getWLRecord(linescore, metsAreHomeTeam)
 
     def getOtherTeamWLRecord(self, linescore):
-        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        #metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "NYM")
+        metsAreHomeTeam = (linescore['home_team_name']['team_abbrev'] == "LAA")
         return self.getWLRecord(linescore, not metsAreHomeTeam)
 
     def getWLRecord(self, linescore, homeOrAway):
