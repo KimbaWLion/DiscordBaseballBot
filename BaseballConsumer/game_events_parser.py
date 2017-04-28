@@ -52,10 +52,13 @@ class GameEventsParser:
                 if resp.status == 200:
                     return await resp.json()
 
-    def getInnings(self,json):
+    def getInnings(self, json):
         return json.get('data').get('game').get('inning')
 
-    def getInningNumber(self,inning):
+    def getCurrentBatter(self, json):
+        return json.get('data').get('game').get('atBat').get('pid')
+
+    def getInningNumber(self, inning):
         return inning.get('num')
 
     def getHalfInningAtBats(self, inning, topOrBottom):
