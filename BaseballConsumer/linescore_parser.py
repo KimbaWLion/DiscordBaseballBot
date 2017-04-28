@@ -51,14 +51,12 @@ class LinescoreParser:
         dataMap['away_team_stats'] = self.getTeamStats("AWAY", data)
         dataMap['inning_data'] = self.getInningData(data)
         dataMap['specialty_info'] = self.getSpecialtyInfo(data)
-        dataMap['status'] = self.getStatusInfo(data)
+        dataMap['status'] = self.getGameStatusInfo(data)
+        dataMap['currentPlayers'] = self.getCurrentPlayers(data)
         return dataMap
 
     def getTeamName(self, homeOrAway, data):
         teamMap = {}
-        team_name = 'home_team_name' # Home team is default
-        team_city = 'home_team_city' # Home team is default
-        team_abbrev = 'home_name_abbrev' # Home team is default
         if homeOrAway is "HOME":
             team_name = 'home_team_name'
             team_city = 'home_team_city'
@@ -75,13 +73,11 @@ class LinescoreParser:
 
     def getTeamRecord(self, homeOrAway, data):
         recordMap = {}
-        team_wins = 'home_win' # Home team is default
-        team_losses = 'home_loss' # Home team is default
         if homeOrAway is "HOME":
-            team_wins = 'home_wins'
+            team_wins = 'home_win'
             team_losses = 'home_loss'
         if homeOrAway is "AWAY":
-            team_wins = 'away_wins'
+            team_wins = 'away_win'
             team_losses = 'away_loss'
         recordMap['team_wins'] = data.get(team_wins)
         recordMap['team_losses'] = data.get(team_losses)
@@ -89,9 +85,6 @@ class LinescoreParser:
 
     def getTeamStats(self, homeOrAway, data):
         statsMap = {}
-        team_runs = 'home_team_runs' # Home team is default
-        team_hits = 'home_team_hits' # Home team is default
-        team_errors = 'home_team_errors' # Home team is default
         if homeOrAway is "HOME":
             team_runs = 'home_team_runs'
             team_hits = 'home_team_hits'
@@ -128,11 +121,25 @@ class LinescoreParser:
         specialtyInfoMap['is_perfect_game'] = (data.get('is_no_hitter') is 'Y')
         return specialtyInfoMap
 
-    def getStatusInfo(self, data):
+    def getGameStatusInfo(self, data):
         statusInfoMap = {}
         statusInfoMap['game_status'] = data.get('status')
         statusInfoMap['game_status_id'] = "".join([data.get('id'), statusInfoMap['game_status'].replace(" ", "")])
+        statusInfoMap['runnerOnBaseStatus'] = data.get('runner_on_base_status')
         return statusInfoMap
+
+    def getCurrentPlayers(self, data):
+        currentPlayersMap = {}
+        batterMap = {}
+        pitcherMap = {}
+        if data.get('current_batter') is None: return None
+        batterMap['name'] = ' '.join([data.get('current_batter').get('first_name'),data.get('current_batter').get('last_name')])
+        batterMap['id'] = data.get('current_batter').get('id')
+        pitcherMap['name'] = ' '.join([data.get('current_pitcher').get('first_name'),data.get('current_pitcher').get('last_name')])
+        pitcherMap['id'] = data.get('current_pitcher').get('id')
+        currentPlayersMap['pitcher'] = pitcherMap
+        currentPlayersMap['batter'] = batterMap
+        return currentPlayersMap
 
     def isGameStarted(self, data):
         statusInfo = self.getStatusInfo(data)
