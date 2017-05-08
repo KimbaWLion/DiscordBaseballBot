@@ -40,6 +40,11 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 5-8-17
+  * Combined the gameStatusChecker into a single function
+  * Made it more configurable with "FavoriteTeam" functions rather that hardcoding Mets values
+  * Added spots to add emoji
+  * Reverted Mike Trout bot
 * 4-27-17
   * Added bases status to the linescore
   * Fixed the "Game started" message since it was only tracking the Warm Up.  Now there's a "Game about to start" and "Game started" message
@@ -54,5 +59,8 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
   * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
 
 # Buglog
+* 5-8-17
+  * There are race conditions when there game actions (not atbats).  In order to make sure the linescore was accurate, I do not have the bot post the next atbat until the currentBatterId in both linescore.json and game_events.json match.  However, if there is a game event, it doesn't mention currentBatterId and as such posts immediately.  So sometimes there is "Coaching visit to the mound" followed by "grand slam" rather than the other way around.
+  * Another race condition, if there is a stolen base, it the linescore often does not reflect the stolen base in update.  
 * 4-27-17
   * Managers' challenges break the bot (if they overturn the call) for some reason.  I put it in a try catch that ignores the exception in these cases.  No clue why it's failing.
