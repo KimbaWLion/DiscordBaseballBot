@@ -5,7 +5,8 @@
     "DISCORD_GAME_THREAD_CHANNEL_ID": "DISCORD_GAME_THREAD_CHANNEL_ID",
     "BOT_TIME_ZONE": "ET",
     "TEAM_TIME_ZONE": "ET",
-    "TEAM_CODE": "ana",
+    "TEAM_CODE": "nyn",
+    "TEAM_ABBREV": "NYM",
 
     "GAME_THREAD_NOW": "./logs/game_thread.now"
 }
