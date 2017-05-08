@@ -126,6 +126,7 @@ class LinescoreParser:
         statusInfoMap['game_status'] = data.get('status')
         statusInfoMap['game_status_id'] = "".join([data.get('id'), statusInfoMap['game_status'].replace(" ", "")])
         statusInfoMap['runnerOnBaseStatus'] = data.get('runner_on_base_status')
+        statusInfoMap['outs'] = data.get('outs')
         return statusInfoMap
 
     def getCurrentPlayers(self, data):
