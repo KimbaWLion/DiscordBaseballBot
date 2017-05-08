@@ -101,6 +101,8 @@ class GameEventsParser:
         gameEventMap['outs'] = gameEvent.get('o')
         gameEventMap['homeTeamRuns'] = gameEvent.get('home_team_runs')
         gameEventMap['awayTeamRuns'] = gameEvent.get('away_team_runs')
+        gameEventMap['batterId'] = gameEvent.get('batter')
+        gameEventMap['event'] = gameEvent.get('event')
         gameEventMap['id'] = self.getId(gameEvent)
         #gameEventMap['playNumber'] = atbat.get('num')
         #gameEventMap['time'] = atbat.get('start_tfs')
@@ -110,22 +112,20 @@ class GameEventsParser:
 
     def getId(self, gameEvent):
         id = gameEvent.get('play_guid')
-        if id is None:
-            extra_id = gameEvent.get('start_tfs_zulu')
-            if extra_id is None: extra_id = gameEvent.get('tfs_zulu')
-            id = ''.join(["NoIdInJSONFile", extra_id])
         return id
 
     def getAtBatMap(self, atbat, inningNum, inningTopOrBot):
         atbatMap = self.getGameEventsMap(atbat, inningNum, inningTopOrBot)
         #atbatMap['playNumber'] = atbat.get('num')
         #atbatMap['time'] = atbat.get('start_tfs')
+        if atbatMap['id'] is None: atbatMap['id'] = ''.join(["NoIdInJSONFile", atbat.get('start_tfs_zulu')])
         atbatMap['gameEvent'] = 'atbat'
         return atbatMap
 
     def getActionsMap(self, action, inningNum, inningTopOrBot):
         actionMap = self.getGameEventsMap(action, inningNum, inningTopOrBot)
-        if actionMap['id'] is None: actionMap['id'] = ''.join([action.get('tfs_zulu'),action.get('event_num')])
+        if actionMap['id'] is None: actionMap['id'] = ''.join(["NoIdInJSONFile",action.get('tfs_zulu'),action.get('event_num')])
+        #if actionMap['batterId'] is None: actionMap['batterId'] = action.get('player')
         actionMap['gameEvent'] = 'action'
         return actionMap
 
