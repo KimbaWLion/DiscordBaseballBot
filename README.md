@@ -1,6 +1,10 @@
 # DiscordBaseballBot
 Posts baseball game updates to a discord channel
 
+[Image of game updates](http://i.imgur.com/xLfqaUW.png)
+
+[Image of strikeout updates with flair](http://i.imgur.com/zhKYNmH.png)
+
 This is a working project to create a baseball updater bot to post game updates in a Discord channel.
 This will rely heavily from the [reddit baseball updater bot](https://github.com/mattabullock/Baseball-GDT-Bot)
 that posted to reddit threads. It will also rely on python discord bots that already exist.  
@@ -41,6 +45,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
 
 # Changelog
 * 5-8-17
+  * Fixed race condition of game actions happening before atbats when the linescore's "batterId" doesn't update quickly.  Since game events do not wait for the batterId to change, they update before the atbat does
   * Combined the gameStatusChecker into a single function
   * Made it more configurable with "FavoriteTeam" functions rather that hardcoding Mets values
   * Added spots to add emoji
