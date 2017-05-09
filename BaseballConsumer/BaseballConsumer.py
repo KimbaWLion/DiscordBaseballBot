@@ -124,7 +124,7 @@ class BaseballUpdaterBot:
 
     def formatLinescoreForDiscord(self, atbat, linescore):
         return "{} {:>2}   ┌───┬──┬──┬──┐\n" \
-               "   {}     |{:<3}│{:>2}│{:>2}│{:>2}│\n" \
+               "   {}     │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
                "  {} {}    ├───┼──┼──┼──┤\n" \
                "{}   │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
                "         └───┴──┴──┴──┘".format(
