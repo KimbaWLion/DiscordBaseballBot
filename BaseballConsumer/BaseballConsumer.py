@@ -169,7 +169,7 @@ class BaseballUpdaterBot:
                 return "<:ITSOUTTAHERE:257607350133719040>"
         else:
             if "Strikeout" in event:
-                if "strikes out swinging" in gameEvent['description']:
+                if "strikes out" in gameEvent['description']:
                     return "<:Strikeout:257620664209506304>"
                 if "called out on strike" in gameEvent['description']:
                     return "<:Strikeout2:257620669527883777>"
@@ -219,6 +219,10 @@ class BaseballUpdaterBot:
         # This list will be what is compared against to see if anything new popped up in the game_events feed
         idsOfPrevEvents = self.getEventIdsFromLog()
 
+        # initialize the globalLinescoreStatus variable
+        global globalLinescoreStatus
+        globalLinescoreStatus = None
+
         response = None
         directories = []
         while True:
@@ -260,9 +264,10 @@ class BaseballUpdaterBot:
 
                     # Comment out this line to hard code a directory
                     #d = "http://gd2.mlb.com/components/game/mlb/year_2017/month_04/day_26/gid_2017_04_26_oakmlb_anamlb_1/"
+                    print("[{}] Searching the URL directory for updates : {}".format(self.getTime(), d))
 
                     linescore_url = "".join([d ,"linescore.json"])
-                    print("[{}] Searching the linescore URL for updates: {}".format(self.getTime(), linescore_url))
+                    #print("[{}] Searching the linescore URL for updates: {}".format(self.getTime(), linescore_url))
                     if not await linescoreParser.doesJSONExistYet(linescore_url):
                         print("[{}] Game has not started".format(self.getTime()))
                         continue
@@ -270,7 +275,7 @@ class BaseballUpdaterBot:
                     linescore = linescoreParser.parseGameDataIntoMap(linescoreJSON)
 
                     game_events_url = "".join([d ,"game_events.json"])
-                    print("[{}] Searching the game URL for updates: {}".format(self.getTime(), game_events_url))
+                    #print("[{}] Searching the game URL for updates: {}".format(self.getTime(), game_events_url))
                     if not await gameEventsParser.doesJSONExistYet(game_events_url):
                         print("[{}] Game has not started".format(self.getTime()))
                         continue
@@ -280,28 +285,15 @@ class BaseballUpdaterBot:
                         continue
                     listOfGameEvents = gameEventsParser.getListOfGameEvents(gameEventsParser.getInnings(gameEventsJSON))
 
-                    # Check if warmup started
-                    #gameWarmupEmbed = self.checkIfWarmupStatus(linescore, idsOfPrevEvents)
-                    #if gameWarmupEmbed is not None: await client.send_message(channel, embed=gameWarmupEmbed)
-#
-                    ## Check if game started
-                    #gameStartedEmbed = self.checkIfGameStartedStatus(linescore, idsOfPrevEvents)
-                    #if gameStartedEmbed is not None: await client.send_message(channel, embed=gameStartedEmbed)
-
                     # Check if new game event
                     for gameEvent in listOfGameEvents:
                         id = (gameEvent['id'] if gameEvent['id'] is not None else "NoIdInJSONFile")
                         if id == "NoIdInJSONFile": print("A game event ID is None, figure out why") # to help debug
                         if id not in idsOfPrevEvents and self.linescoreAndGameEventsInSync(linescore, gameEvent):# and self.hasMikeTrout(gameEvent):
+                            self.updateGlobalLinescoreStatus(linescore)
                             self.printToLog(gameEvent)
                             await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
                             idsOfPrevEvents = self.getEventIdsFromLog()
-
-                    # Check if game ended
-                    #gameEndedTuple = self.checkIfGameEndedStatus(linescore, idsOfPrevEvents)
-                    #if gameEndedTuple is not None:
-                    #    await client.send_message(channel, embed=gameEndedTuple[0])
-                    #    await client.send_message(channel, gameEndedTuple[1])
 
                     # Check if game status changed
                     gameStatusTuple = self.checkGameStatus(linescore, idsOfPrevEvents)
@@ -324,9 +316,28 @@ class BaseballUpdaterBot:
             return True
         if (gameEvent['batterId'] != linescore['currentPlayers']['batter']['id']):
             return True
-        if linescore['status']['outs'] == "3":
+        if self.linescoreStatusHasChanged(linescore):
             return True
         return False
+
+    def linescoreStatusHasChanged(self, linescore):
+        global globalLinescoreStatus
+        newLinescoreStatus = self.getLinescoreStatus(linescore)
+        if globalLinescoreStatus != newLinescoreStatus:
+            globalLinescoreStatus = newLinescoreStatus
+            return True
+        return False
+
+    def getLinescoreStatus(self, linescore):
+        # Outs, Base status, Home runs, Home hits, Home errors, Away run, Away hits, Away errors
+        return (linescore['status']['outs'], linescore['status']['runnerOnBaseStatus'],
+                linescore['home_team_stats']['team_runs'], linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors'],
+                linescore['away_team_stats']['team_runs'], linescore['away_team_stats']['team_hits'], linescore['away_team_stats']['team_errors'])
+
+    def updateGlobalLinescoreStatus(self, linescore):
+        newLinescoreStatus = self.getLinescoreStatus(linescore)
+        global globalLinescoreStatus
+        globalLinescoreStatus = newLinescoreStatus
 
     def checkGameStatus(self, linescore, idsOfPrevEvents):
         id = linescore['status']['game_status_id']
@@ -341,7 +352,7 @@ class BaseballUpdaterBot:
             return em
         if (gameStatus == "Postponed") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
-            em = discord.Embed(title='Game is postponed', description='To be made up later')
+            em = (discord.Embed(title='Game is postponed', description='To be made up later'), "Rain delay stats?")
             return em
         if (gameStatus == "Game Over") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
@@ -350,29 +361,11 @@ class BaseballUpdaterBot:
         return None
 
     def warmupStatus(self):
-        return (discord.Embed(title='Game\'s about to start, everyone get in here!', description='HYPE HYPE HYPE HYPE.'), "")
+        return (discord.Embed(title='Game\'s about to start, everyone get in here!', description='HYPE HYPE HYPE HYPE.'),
+                "<:Raccoon:257616622599143424> <:Parakeet:257615994569228300>")
 
-    def gameStartedStatus(self, linescore):
-        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "")
-
-   #def checkIfWarmupStatus(self, linescore, idsOfPrevEvents):
-   #    id = linescore['status']['game_status_id']
-   #    gameStatus = linescore['status']['game_status']
-   #    if (gameStatus == "Warmup") and (id not in idsOfPrevEvents):
-   #        self.printGameStatusToLog(id, gameStatus)
-   #        em = discord.Embed(title='Game\'s about to start, everyone get in here!', description='HYPE HYPE HYPE HYPE.')
-   #        return em
-   #    return None
-
-    #def checkIfGameStartedStatus(self, linescore, idsOfPrevEvents):
-    #    id = linescore['status']['game_status_id']
-    #    gameStatus = linescore['status']['game_status']
-    #    if (gameStatus == "In Progress") and (id not in idsOfPrevEvents):
-    #        self.printGameStatusToLog(id, gameStatus)
-    #        em = discord.Embed(title='Play ball!', description='Mets game has started.')
-    #        #em = discord.Embed(title='Play ball!', description='Mike Trout\'s butt is on the field, you best be watching!')
-    #        return em
-    #    return None
+    def gameStartedStatus(self):
+        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "<:Flamingo:257617918395809792>")
 
     def checkIfRainDelay(self):
         pass
@@ -400,35 +393,6 @@ class BaseballUpdaterBot:
             em = (discord.Embed(title=title, description=description),
                   'Better luck next time!')
         return em
-
-    # def checkIfGameEndedStatus(self, linescore, idsOfPrevEvents):
-    #     id = linescore['status']['game_status_id']
-    #     gameStatus = linescore['status']['game_status']
-    #     if (gameStatus == "Game Over") and (id not in idsOfPrevEvents):
-    #         self.printGameStatusToLog(id, gameStatus)
-    #         favoriteTeamWLRecord = self.getFavoriteTeamWLRecord(linescore)
-    #         otherTeamWLRecord = self.getOtherTeamWLRecord(linescore)
-    #         if self.isFavoriteTeamWinning(linescore):
-    #             # TCB url 'https://www.youtube.com/watch?v=mmwic9kFx2c'
-    #             title = 'Put it in the books!'
-    #             description = '{} ({}-{}) beat the {} ({}-{}) by a score of {}-{}!'.format(
-    #                 favoriteTeamWLRecord[0], favoriteTeamWLRecord[1], favoriteTeamWLRecord[2],
-    #                 otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
-    #                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
-    #             )
-    #             em = (discord.Embed(title=title, description=description),
-    #                   'https://www.youtube.com/watch?v=mmwic9kFx2c')
-    #         else:
-    #             title = 'Mets defeated'
-    #             description = '{} ({}-{}) were defeated by the {} ({}-{}) by a score of {}-{}'.format(
-    #                 favoriteTeamWLRecord[0], favoriteTeamWLRecord[1], favoriteTeamWLRecord[2],
-    #                 otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
-    #                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
-    #             )
-    #             em = (discord.Embed(title=title, description=description),
-    #                   'Better luck next time!')
-    #         return em
-    #     return None
 
     def isFavoriteTeamWinning(self, linescore):
         homeTeamRuns = linescore['home_team_stats']['team_runs']
