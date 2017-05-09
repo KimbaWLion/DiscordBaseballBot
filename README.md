@@ -1,9 +1,10 @@
 # DiscordBaseballBot
 Posts baseball game updates to a discord channel
 
-[Image of game updates](http://i.imgur.com/xLfqaUW.png)
+![Image of game updates](http://i.imgur.com/xLfqaUW.png)
 
-[Image of strikeout updates with flair](http://i.imgur.com/zhKYNmH.png)
+Image of game updates with flair
+![Image of strikeout updates with flair](http://i.imgur.com/zhKYNmH.png)
 
 This is a working project to create a baseball updater bot to post game updates in a Discord channel.
 This will rely heavily from the [reddit baseball updater bot](https://github.com/mattabullock/Baseball-GDT-Bot)
@@ -14,20 +15,54 @@ anything well maintained.  If there is interest in it, I will expand it out to m
 and easier to use for all major league teams.
 
 # How it works
-The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obtains all game events for the day in game_thread.now.  The bot compares the IDs from gd2.mlb.com with what it has already logged in game_thread.now.  If there is an ID which was not there before, the bot posts to discord and appends the game event to the game_thread.now log.
+The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get game event and stat information.  The bot compares the IDs from gd2.mlb.com with what it has already logged in game_thread.now.  If there is an ID which was not there before, the bot posts to discord and appends the game event to the game_thread.now log.
 
 # How to use
 1. [Create a discord bot and add it to your server](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token)
-2. Edit DiscordPoster/settings.json to have the tokens/ids/team codes you desire
+2. Edit settings.json to have the tokens/ids/team codes you desire (Lookup the TEAM_ABBREV and TEAM_CODE values for your preferred team in the table below)
 3. Create a blank file BaseballConsumer/logs/game_thread.now
 4. run MainEntryBot.py the day of the game
 5. When game is finished, wait until the next day and run MainEntryBot.py again
 
+# Team code and abbreviation table
+|     TEAM     | TEAM_ABBREV | TEAM_CODE |
+| ------------ |:-----------:|:---------:|
+| Diamondbacks |     ARI     |    ari    |
+| Braves       |     ATL     |    atl    |
+| Orioles      |     BAL     |    bal    |
+| Red Sox      |     BOS     |    bos    |
+| White Sox    |     CWS     |    cha    |
+| Cubs         |     CHC     |    chn    |
+| Reds         |     CIN     |    cin    |
+| Indians      |     CLE     |    cle    |
+| Rockies      |     COL     |    col    |
+| Tigers       |     DET     |    det    |
+| Astros       |     HOU     |    hou    |
+| Royals       |     KC      |    kca    |
+| Angels       |     LAA     |    ana    |
+| Dodgers      |     LAD     |    lan    |
+| Marlins      |     MIA     |    mia    |
+| Brewers      |     MIL     |    mil    |
+| Twins        |     MIN     |    min    |
+| Yankees      |     NYY     |    nya    |
+| Mets         |     NYM     |    nyn    |
+| Athletics    |     OAK     |    oak    |
+| Phillies     |     PHI     |    phi    |
+| Pirates      |     PIT     |    pit    |
+| Padres       |     SD      |    sdn    |
+| Giants       |     SF      |    sfn    |
+| Mariners     |     SEA     |    sea    |
+| Cardinals    |     STL     |    sln    |
+| Rays         |     TB      |    tba    |
+| Rangers      |     TEX     |    tex    |
+| Blue Jays    |     TOR     |    tor    |
+| Nationals    |     WSH     |    was    |
+
 # Files
 * DiscordPoster/\_\_init\_\_.py
   * Dunno if this is needed
-* DiscordPoster/settings.json
-  * The settings of the bot: The server ID, bot Token, and team code
+* settings.json
+  * The settings of the bot: The server ID, bot Token, team code, and more
 * DiscordPoster/testPost.py
   * A file to test posting to Discord.  Scheduled for removal
 * BaseballConsumer/\_\_init_\_\.py
@@ -65,7 +100,13 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds and obt
 
 # Buglog
 * 5-8-17
-  * There are race conditions when there game actions (not atbats).  In order to make sure the linescore was accurate, I do not have the bot post the next atbat until the currentBatterId in both linescore.json and game_events.json match.  However, if there is a game event, it doesn't mention currentBatterId and as such posts immediately.  So sometimes there is "Coaching visit to the mound" followed by "grand slam" rather than the other way around.
-  * Another race condition, if there is a stolen base, it the linescore often does not reflect the stolen base in update.  
+  * ~~There are race conditions when there game actions (not atbats).  In order to make sure the linescore was accurate, I do not have the bot post the next atbat until the currentBatterId in both linescore.json and game_events.json match.  However, if there is a game event, it doesn't mention currentBatterId and as such posts immediately.  So sometimes there is "Coaching visit to the mound" followed by "grand slam" rather than the other way around. Another race condition, if there is a stolen base, it the linescore often does not reflect the stolen base in update.~~  
+    * 5-8-17 - This should be fixed now with the globalLinescoreStatus update
 * 4-27-17
   * Managers' challenges break the bot (if they overturn the call) for some reason.  I put it in a try catch that ignores the exception in these cases.  No clue why it's failing.
+
+# Future Features
+* ~~Fix race conditions~~
+  * 5-8-17 - Completed
+* Leverage Mike Trout revision to be able to post uniquely for every player. (i.e. post Thor's hammer whenever Syndergaard gets a hit)
+* Allow the bot to change over the date itself so that you can leave it running instead of needing to restart it every day
