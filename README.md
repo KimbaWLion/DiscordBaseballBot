@@ -21,6 +21,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 1. [Create a discord bot and add it to your server](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token)
 2. Edit settings.json to have the tokens/ids/team codes you desire (Lookup the TEAM_ABBREV and TEAM_CODE values for your preferred team in the table below)
 3. Create a blank file BaseballConsumer/logs/game_thread.now
+4. in BaseballConsumer/BaseballConsumer.py, change line 27 to the path of the game_thread.now file.  (i.e. 'C:\Users...\game_thread.now')
 4. run MainEntryBot.py the day of the game
 5. When game is finished, wait until the next day and run MainEntryBot.py again
 
