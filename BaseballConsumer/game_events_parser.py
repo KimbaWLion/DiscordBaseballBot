@@ -124,7 +124,7 @@ class GameEventsParser:
 
     def getActionsMap(self, action, inningNum, inningTopOrBot):
         actionMap = self.getGameEventsMap(action, inningNum, inningTopOrBot)
-        if actionMap['id'] is None: actionMap['id'] = ''.join(["NoIdInJSONFile",action.get('tfs_zulu'),action.get('event_num')])
+        if actionMap['id'] is None: actionMap['id'] = ''.join(["NoIdInJSONFile",action.get('tfs_zulu'),actionMap['description'].replace(" ","")])
         #if actionMap['batterId'] is None: actionMap['batterId'] = action.get('player')
         actionMap['gameEvent'] = 'action'
         return actionMap
