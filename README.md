@@ -3,8 +3,8 @@ Posts baseball game updates to a discord channel
 
 ![Image of game updates](http://i.imgur.com/xLfqaUW.png)
 
-Image of game updates with flair
-![Image of strikeout updates with flair](http://i.imgur.com/zhKYNmH.png)
+Image of game updates with K-tracker
+![Image of strikeout updates with flair](http://i.imgur.com/uXE0i5d.png)
 
 This is a working project to create a baseball updater bot to post game updates in a Discord channel.
 This will rely heavily from the [reddit baseball updater bot](https://github.com/mattabullock/Baseball-GDT-Bot)
