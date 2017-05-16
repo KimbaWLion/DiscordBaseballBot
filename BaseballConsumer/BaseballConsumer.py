@@ -106,37 +106,35 @@ class BaseballUpdaterBot:
 
 
     def formatGameEventForDiscord(self, gameEvent, linescore):
-        # return "|!{}|testNYM|!{}|testHits|testErrors|  \n  |!{} Outs |testPHI|!{}|testHits|testErrors|\n \n" \
-        #        "Last Play:  On a !{}-!{} count, !{} \n \n !{} Use atbat[result] to play around with the result." \
-        #        "If it's a Mets pitcher strikeout, post KKKKK.  If it's a Mets home run, praise Kevin Long. Animal facts, etc...".format(
-        #     atbat['topOrBot'] ,atbat['awayTeamRuns'] ,atbat['outs'] ,atbat['homeTeamRuns'] ,atbat['balls'],
-        #     atbat['strikes'], atbat['description'],"ExtraSpaceAddingThisIn")
-        #     #,self.differentFlairsForDifferentResults(atbat['topOrBot'] ,atbat['result']))
-        #
         return "```" \
                "{}\n" \
-               "{}{}" \
+               "{}{}\n" \
                "```\n" \
+               "{}" \
                "{}".format(self.formatLinescoreForDiscord(gameEvent, linescore),
                            self.formatPitchCount(gameEvent['gameEvent'], gameEvent['balls'], gameEvent['strikes']),
                            gameEvent['description'],
-                           self.playerismsAndEmoji(gameEvent, linescore))
+                           self.playerismsAndEmoji(gameEvent, linescore),
+                           self.endOfInning(gameEvent))
 
-    def formatLinescoreForDiscord(self, atbat, linescore):
-        return "{} {:>2}   ┌───┬──┬──┬──┐\n" \
+    def formatLinescoreForDiscord(self, gameEvent, linescore):
+        return "{}   ┌───┬──┬──┬──┐\n" \
                "   {}     │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
                "  {} {}    ├───┼──┼──┼──┤\n" \
                "{}   │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
                "         └───┴──┴──┴──┘".format(
-            atbat['topOrBot'], atbat['inning'],
+            self.formatInning(gameEvent),
             self.formatSecondBase(linescore['status']['runnerOnBaseStatus']),
             linescore['away_team_name']['team_abbrev'], linescore['away_team_stats']['team_runs'],
             linescore['away_team_stats']['team_hits'], linescore['away_team_stats']['team_errors'],
             self.formatThirdBase(linescore['status']['runnerOnBaseStatus']), self.formatFirstBase(linescore['status']['runnerOnBaseStatus']),
-            self.formatOuts(atbat['outs']),
+            self.formatOuts(gameEvent['outs']),
             linescore['home_team_name']['team_abbrev'], linescore['home_team_stats']['team_runs'],
             linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors']
         )
+
+    def formatInning(self, gameEvent):
+        return "{} {:>2}".format(gameEvent['topOrBot'], gameEvent['inning'])
 
     def formatOuts(self, outs):
         outOrOuts = " Outs"
@@ -162,22 +160,34 @@ class BaseballUpdaterBot:
         elif gameEvent is 'action': return ""
         raise Exception("gameEvent not recognized")
 
+    def endOfInning(self, gameEvent):
+        if gameEvent['outs'] is "3": return "```------ End of {} ------```".format(self.formatInning(gameEvent))
+        return ""
+
     def playerismsAndEmoji(self, gameEvent, linescore):
+        playerism = ""
         event = gameEvent['event']
         if self.favoriteTeamIsBatting(gameEvent, linescore):
             if "Home Run" in event:
-                return "<:ITSOUTTAHERE:257607350133719040>"
+                playerism = "<:ITSOUTTAHERE:257607350133719040>\n"
         else:
             if "Strikeout" in event:
+                global metsStaffKTrackerTuple
                 if "strikes out" in gameEvent['description']:
-                    return "<:Strikeout:257620664209506304>"
+                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0],"<:Strikeout:257620664209506304>"]), metsStaffKTrackerTuple[1] + 1, metsStaffKTrackerTuple[2])
                 if "called out on strike" in gameEvent['description']:
-                    return "<:Strikeout2:257620669527883777>"
-        return ""
+                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0],"<:Strikeout2:257620669527883777>"]), metsStaffKTrackerTuple[1], metsStaffKTrackerTuple[2] + 1)
+
+                if metsStaffKTrackerTuple[1] == 3 and metsStaffKTrackerTuple[2] == 0:
+                    playerism = "3 <:Strikeout:257620664209506304>s\n"
+                else:
+                    playerism = "".join(["Strikeout tracker: ", metsStaffKTrackerTuple[0], "\n"])
+
+        return playerism
 
 
     def favoriteTeamIsBatting(self, gameEvent, linescore):
-        return self.favoriteTeamIsHomeTeam(linescore) and gameEvent['topOrBot'] == "BOT"
+        return (self.favoriteTeamIsHomeTeam(linescore) and gameEvent['topOrBot'] == "BOT" or not self.favoriteTeamIsHomeTeam(linescore) and gameEvent['topOrBot'] == "TOP")
 
     def getEventIdsFromLog(self):
         idsFromLog = []
@@ -222,6 +232,10 @@ class BaseballUpdaterBot:
         # initialize the globalLinescoreStatus variable
         global globalLinescoreStatus
         globalLinescoreStatus = None
+        # initialize metsStaffKTrackerTuple variable: string, swinging Ks, looking Ks
+        global metsStaffKTrackerTuple
+        metsStaffKTrackerTuple = ("", 0, 0)
+
 
         response = None
         directories = []
@@ -267,7 +281,6 @@ class BaseballUpdaterBot:
                     print("[{}] Searching the URL directory for updates : {}".format(self.getTime(), d))
 
                     linescore_url = "".join([d ,"linescore.json"])
-                    #print("[{}] Searching the linescore URL for updates: {}".format(self.getTime(), linescore_url))
                     if not await linescoreParser.doesJSONExistYet(linescore_url):
                         print("[{}] Game has not started".format(self.getTime()))
                         continue
@@ -275,7 +288,6 @@ class BaseballUpdaterBot:
                     linescore = linescoreParser.parseGameDataIntoMap(linescoreJSON)
 
                     game_events_url = "".join([d ,"game_events.json"])
-                    #print("[{}] Searching the game URL for updates: {}".format(self.getTime(), game_events_url))
                     if not await gameEventsParser.doesJSONExistYet(game_events_url):
                         print("[{}] Game has not started".format(self.getTime()))
                         continue
@@ -289,7 +301,9 @@ class BaseballUpdaterBot:
                     for gameEvent in listOfGameEvents:
                         id = (gameEvent['id'] if gameEvent['id'] is not None else "NoIdInJSONFile")
                         if id == "NoIdInJSONFile": print("A game event ID is None, figure out why") # to help debug
-                        if id not in idsOfPrevEvents and self.linescoreAndGameEventsInSync(linescore, gameEvent):# and self.hasMikeTrout(gameEvent):
+                        if id not in idsOfPrevEvents:  # and self.hasMikeTrout(gameEvent):
+                            if not self.linescoreAndGameEventsInSync(linescore, gameEvent):
+                                break
                             self.updateGlobalLinescoreStatus(linescore)
                             self.printToLog(gameEvent)
                             await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
@@ -312,11 +326,11 @@ class BaseballUpdaterBot:
         print("/*------------- End of Bot.run() -------------*/")
 
     def linescoreAndGameEventsInSync(self, linescore, gameEvent):
-        if linescore['currentPlayers'] is None:
-            return True
-        if (gameEvent['batterId'] != linescore['currentPlayers']['batter']['id']):
+        if int(gameEvent['inning']) < int(linescore['status']['currentInning']): # if bot posting is behind, let it catch up
             return True
         if self.linescoreStatusHasChanged(linescore):
+            return True
+        if gameEvent['gameEvent'] == 'action':
             return True
         return False
 
@@ -362,10 +376,10 @@ class BaseballUpdaterBot:
 
     def warmupStatus(self):
         return (discord.Embed(title='Game\'s about to start, everyone get in here!', description='HYPE HYPE HYPE HYPE.'),
-                "<:Raccoon:257616622599143424> <:Parakeet:257615994569228300>")
+                "Meet the Mets, meet the Mets.  Step right up and greet the Mets...")
 
     def gameStartedStatus(self):
-        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "<:Flamingo:257617918395809792>")
+        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "[starting pitchers stats]")
 
     def checkIfRainDelay(self):
         pass
@@ -398,8 +412,8 @@ class BaseballUpdaterBot:
         homeTeamRuns = linescore['home_team_stats']['team_runs']
         awayTeamRuns = linescore['away_team_stats']['team_runs']
         favoriteTeamIsHomeTeam = self.favoriteTeamIsHomeTeam(linescore)
-        return (favoriteTeamIsHomeTeam and (homeTeamRuns > awayTeamRuns)) or \
-               (not favoriteTeamIsHomeTeam and (homeTeamRuns < awayTeamRuns))
+        return (favoriteTeamIsHomeTeam and (int(homeTeamRuns) > int(awayTeamRuns))) or \
+               (not favoriteTeamIsHomeTeam and (int(homeTeamRuns) < int(awayTeamRuns)))
 
     def getFavoriteTeamWLRecord(self, linescore):
         return self.getWLRecord(linescore, self.favoriteTeamIsHomeTeam(linescore))
