@@ -22,6 +22,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 2. Edit settings.json to have the tokens/ids/team codes you desire (Lookup the TEAM_ABBREV and TEAM_CODE values for your preferred team in the table below)
 3. Create a blank file BaseballConsumer/logs/game_thread.now
 4. in BaseballConsumer/BaseballConsumer.py, change line 27 to the path of the game_thread.now file.  (i.e. 'C:\Users...\game_thread.now')
+5. Make sure to download discord.py, aiohttp.py, asyncio.py packages
 4. run MainEntryBot.py the day of the game
 5. When game is finished, wait until the next day and run MainEntryBot.py again
 
@@ -80,6 +81,13 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 5-15-17
+  * Now posts a divider at the end of innings
+  * Added K-tracker for the favorite team (using Mets flairs for the time being)
+  * Bug fix on when favorite team is batting
+  * bug fix on when game actions post before the the atbats that happen before them
+  * bug fix on when favoirte team is winning
+  * bug fix actions repeating when their linescore info changes (for unknown reasons on mlb.com)
 * 5-8-17
   * Fixed race condition of game actions happening before atbats when the linescore's "batterId" doesn't update quickly.  Since game events do not wait for the batterId to change, they update before the atbat does
   * Combined the gameStatusChecker into a single function
