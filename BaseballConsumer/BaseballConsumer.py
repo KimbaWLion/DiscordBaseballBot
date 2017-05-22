@@ -99,7 +99,8 @@ class BaseballUpdaterBot:
                 "Mike Trout 2020!",
                 "Mike Trout always did his chores and made his bed before playing video games as a kid.",
                 "Did you know that tuortekim is Mike Trout backwards?",
-                "Robbing homeruns and catches at his shoestrings,\nScoring RBIs guaranteed with one swing,\nNot being injured from shoddy hamstrings,\nMike Trout does a few of my favorite things."
+                "Robbing homeruns and catches at his shoestrings,\nScoring RBIs guaranteed with one swing,\nNot being injured from shoddy hamstrings,\nMike Trout does a few of my favorite things.",
+                "I'm so glad I get to watch Mike Trout play every single day"
             ]
             return random.choice(mikeTroutism)
         return ""
@@ -179,10 +180,11 @@ class BaseballUpdaterBot:
                     metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0],"<:Strikeout2:257620669527883777>"]), metsStaffKTrackerTuple[1], metsStaffKTrackerTuple[2] + 1)
 
                 if metsStaffKTrackerTuple[1] == 3 and metsStaffKTrackerTuple[2] == 0:
-                    playerism = "3 <:Strikeout:257620664209506304>s\n"
+                    playerism = "Strikeout tracker: 3 <:Strikeout:257620664209506304>s\n"
                 else:
                     playerism = "".join(["Strikeout tracker: ", metsStaffKTrackerTuple[0], "\n"])
-
+        #if self.hasMikeTrout(gameEvent):
+        #    playerism = "".join([self.formatMikeTroutisms(gameEvent['description']), "\n"])
         return playerism
 
 
@@ -231,7 +233,7 @@ class BaseballUpdaterBot:
 
         # initialize the globalLinescoreStatus variable
         global globalLinescoreStatus
-        globalLinescoreStatus = None
+        globalLinescoreStatus = ("0", "0", "0", "0", "0", "0", "0", "0")
         # initialize metsStaffKTrackerTuple variable: string, swinging Ks, looking Ks
         global metsStaffKTrackerTuple
         metsStaffKTrackerTuple = ("", 0, 0)
@@ -307,6 +309,7 @@ class BaseballUpdaterBot:
                             self.updateGlobalLinescoreStatus(linescore)
                             self.printToLog(gameEvent)
                             await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
+                            self.resetOutsGlobalLinescoreStatus()
                             idsOfPrevEvents = self.getEventIdsFromLog()
 
                     # Check if game status changed
@@ -330,7 +333,7 @@ class BaseballUpdaterBot:
             return True
         if self.linescoreStatusHasChanged(linescore):
             return True
-        if gameEvent['gameEvent'] == 'action':
+        if gameEvent['gameEvent'] == 'action' and "Stolen" not in gameEvent['event']:
             return True
         return False
 
@@ -352,6 +355,10 @@ class BaseballUpdaterBot:
         newLinescoreStatus = self.getLinescoreStatus(linescore)
         global globalLinescoreStatus
         globalLinescoreStatus = newLinescoreStatus
+
+    def resetOutsGlobalLinescoreStatus(self):
+        global globalLinescoreStatus
+        if globalLinescoreStatus[0] == "3": globalLinescoreStatus[0] == "0" # Make sure to reset outs to
 
     def checkGameStatus(self, linescore, idsOfPrevEvents):
         id = linescore['status']['game_status_id']
@@ -405,7 +412,7 @@ class BaseballUpdaterBot:
                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
             )
             em = (discord.Embed(title=title, description=description),
-                  'Better luck next time!')
+                  'http://i0.kym-cdn.com/photos/images/facebook/000/804/617/d5b.jpg') #Better luck next time!
         return em
 
     def isFavoriteTeamWinning(self, linescore):
