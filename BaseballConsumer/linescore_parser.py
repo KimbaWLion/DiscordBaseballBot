@@ -53,6 +53,7 @@ class LinescoreParser:
         dataMap['specialty_info'] = self.getSpecialtyInfo(data)
         dataMap['status'] = self.getGameStatusInfo(data)
         dataMap['currentPlayers'] = self.getCurrentPlayers(data)
+        dataMap['probableStartingPitchers'] = self.getProbableStartingPitchers(data)
         return dataMap
 
     def getTeamName(self, homeOrAway, data):
@@ -142,6 +143,24 @@ class LinescoreParser:
         currentPlayersMap['pitcher'] = pitcherMap
         currentPlayersMap['batter'] = batterMap
         return currentPlayersMap
+
+    def getProbableStartingPitchers(self, data):
+        probableStartingPitchersMap = {}
+        awayPitcher = data.get('away_probable_pitcher')
+        homePitcher = data.get('home_probable_pitcher')
+        if awayPitcher is None or homePitcher is None: return None
+        probableStartingPitchersMap['away_pitcher'] = self.getProbableStartingPitcherStats(awayPitcher)
+        probableStartingPitchersMap['home_pitcher'] = self.getProbableStartingPitcherStats(homePitcher)
+        return probableStartingPitchersMap
+
+    def getProbableStartingPitcherStats(self, pitcherStats):
+        pitcherStatsMap = {}
+        pitcherStatsMap['name'] = ' '.join([pitcherStats.get('first_name'),pitcherStats.get('last_name')])
+        pitcherStatsMap['throwinghand'] = pitcherStats.get('throwinghand')
+        pitcherStatsMap['era'] = pitcherStats.get('era')
+        pitcherStatsMap['wins'] = pitcherStats.get('wins')
+        pitcherStatsMap['losses'] = pitcherStats.get('losses')
+        return pitcherStatsMap
 
     def isGameStarted(self, data):
         statusInfo = self.getStatusInfo(data)
