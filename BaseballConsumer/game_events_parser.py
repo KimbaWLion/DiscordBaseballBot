@@ -104,6 +104,7 @@ class GameEventsParser:
         gameEventMap['batterId'] = gameEvent.get('batter')
         gameEventMap['event'] = gameEvent.get('event')
         gameEventMap['id'] = self.getId(gameEvent)
+        gameEventMap['rbi'] = gameEvent.get('rbi')
         #gameEventMap['playNumber'] = atbat.get('num')
         #gameEventMap['time'] = atbat.get('start_tfs')
         gameEventMap['inning'] = inningNum
@@ -175,7 +176,6 @@ class GameEventsParser:
 
     def printInnings(self,innings):
         for inning in innings:
-            #print "inning #", self.getInningNumber(inning)
             top = self.getTopHalfInningAtBats(inning)
             bot = self.getBottomHalfInningAtBats(inning)
             self.printAtBats(top)
