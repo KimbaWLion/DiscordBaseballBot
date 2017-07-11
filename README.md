@@ -81,6 +81,12 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 7-10-17
+  * Changed Mike Trout bot into Chase Utley bot
+  * Grand slam salami emoji
+  * pregame probable pitchers
+  * RBI emoji
+  * fixed beginning of inning bug
 * 5-21-17
   * Making sure stolen bases wait for the linescore to update before publishing them 
 * 5-15-17
@@ -112,8 +118,9 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 # Buglog
 * 5-8-17
   * ~~There are race conditions when there game actions (not atbats).  In order to make sure the linescore was accurate, I do not have the bot post the next atbat until the currentBatterId in both linescore.json and game_events.json match.  However, if there is a game event, it doesn't mention currentBatterId and as such posts immediately.  So sometimes there is "Coaching visit to the mound" followed by "grand slam" rather than the other way around. Another race condition, if there is a stolen base, it the linescore often does not reflect the stolen base in update.~~  
-    * 5-8-17 - This should be fixed now with the globalLinescoreStatus update
-    * 5-21-17 - linescore still is sometimes out of sync, but mostly okay
+    * ~~5-8-17 - This should be fixed now with the globalLinescoreStatus update~~
+    * ~~5-21-17 - linescore still is sometimes out of sync, but mostly okay~~
+    * This is fixed :)
 * 4-27-17
   * Managers' challenges break the bot (if they overturn the call) for some reason.  I put it in a try catch that ignores the exception in these cases.  No clue why it's failing.
 
