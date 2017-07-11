@@ -74,33 +74,35 @@ class BaseballUpdaterBot:
             atbat['outs'] ,atbat['result'], atbat['description'])
 
     def hasMikeTrout(self, gameEvent):
-        if "Mike Trout" in gameEvent['description']: return True
+        if "Chase Utley" in gameEvent['description']: return True
         return False
 
     def formatMikeTroutisms(self, description):
-        if "Mike Trout" in description:
+        if "Chase Utley" in description:
             mikeTroutism = [
-                "Isn't Mike Trout just like, the cutest?",
-                "<3 Mike Trout <3",
-                "OMG, did you see Mike run?  He's like, so fast!",
-                "I could lay down and listen to Mike tell me the weather for hours...",
-                "Fuck, Marry, Kill.  Mike Trout, Mike Trout, and not Mike Trout.  Go",
-                "I'd swim upstream to spawn with Mike Trout.",
-                ":) Trout-y :)",
-                "Seeing Mike Trout play makes me feel everything is right with the world.",
-                "No one hits like Mike Trout, matches wits like Mike Trout, in a spitting match nobody spits like Mike Trout...",
-                "It's a bird!  It's a plane!  No, it's Mike Trout!",
-                "I just wanna hug Mike Trout, he looks so squishy.",
-                "9 out of 10 destists recommend Mike Trout.",
-                "Mike Trout allows children to eat ice cream for breakfast.",
-                "Mike Trout's like my favorite player ever.",
-                "Gimme a M-I-K-E!  Gimme a T-R-O-U-T!  What does that spell?!?!?",
-                "Mike Trout always tips his taxi drivers",
-                "Mike Trout 2020!",
-                "Mike Trout always did his chores and made his bed before playing video games as a kid.",
-                "Did you know that tuortekim is Mike Trout backwards?",
-                "Robbing homeruns and catches at his shoestrings,\nScoring RBIs guaranteed with one swing,\nNot being injured from shoddy hamstrings,\nMike Trout does a few of my favorite things.",
-                "I'm so glad I get to watch Mike Trout play every single day"
+                #"Isn't Mike Trout just like, the cutest?",
+                #"<3 Mike Trout <3",
+                #"OMG, did you see Mike run?  He's like, so fast!",
+                #"I could lay down and listen to Mike tell me the weather for hours...",
+                #"Fuck, Marry, Kill.  Mike Trout, Mike Trout, and not Mike Trout.  Go",
+                #"I'd swim upstream to spawn with Mike Trout.",
+                #":) Trout-y :)",
+                #"Seeing Mike Trout play makes me feel everything is right with the world.",
+                #"No one hits like Mike Trout, matches wits like Mike Trout, in a spitting match nobody spits like Mike Trout...",
+                #"It's a bird!  It's a plane!  No, it's Mike Trout!",
+                #"I just wanna hug Mike Trout, he looks so squishy.",
+                #"9 out of 10 destists recommend Mike Trout.",
+                #"Mike Trout allows children to eat ice cream for breakfast.",
+                #"Mike Trout's like my favorite player ever.",
+                #"Gimme a M-I-K-E!  Gimme a T-R-O-U-T!  What does that spell?!?!?",
+                #"Mike Trout always tips his taxi drivers",
+                #"Mike Trout 2020!",
+                #"Mike Trout always did his chores and made his bed before playing video games as a kid.",
+                #"Did you know that tuortekim is Mike Trout backwards?",
+                #"Robbing homeruns and catches at his shoestrings,\nScoring RBIs guaranteed with one swing,\nNot being injured from shoddy hamstrings,\nMike Trout does a few of my favorite things.",
+                #"I'm so glad I get to watch Mike Trout play every single day"
+                "Fuck Chase Utley",
+                "uck-Fay ase_Utley-Chay"
             ]
             return random.choice(mikeTroutism)
         return ""
@@ -169,8 +171,11 @@ class BaseballUpdaterBot:
         playerism = ""
         event = gameEvent['event']
         if self.favoriteTeamIsBatting(gameEvent, linescore):
-            if "Home Run" in event:
-                playerism = "<:ITSOUTTAHERE:257607350133719040>\n"
+            if "Home Run" in event and gameEvent['rbi'] != "4": playerism = ''.join([playerism, "<:ITSOUTTAHERE:257607350133719040>\n"])
+            if "Home Run" in event and gameEvent['rbi'] == "4": playerism = ''.join([playerism, "<:salami:323333927936983040>\n"])
+            if gameEvent['rbi'] is not None:
+                for i in range(int(gameEvent['rbi'])):
+                    playerism = ''.join([playerism, "<:ribbies:321805919488966666> "])
         else:
             if "Strikeout" in event:
                 global metsStaffKTrackerTuple
@@ -180,11 +185,12 @@ class BaseballUpdaterBot:
                     metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0],"<:Strikeout2:257620669527883777>"]), metsStaffKTrackerTuple[1], metsStaffKTrackerTuple[2] + 1)
 
                 if metsStaffKTrackerTuple[1] == 3 and metsStaffKTrackerTuple[2] == 0:
-                    playerism = "Strikeout tracker: 3 <:Strikeout:257620664209506304>s\n"
+                    playerism = "Strikeout tracker: 3 <:Strikeout:257620664209506304>s"
                 else:
-                    playerism = "".join(["Strikeout tracker: ", metsStaffKTrackerTuple[0], "\n"])
-        #if self.hasMikeTrout(gameEvent):
-        #    playerism = "".join([self.formatMikeTroutisms(gameEvent['description']), "\n"])
+                    playerism = "".join(["Strikeout tracker: ", metsStaffKTrackerTuple[0]])
+        playerism = ''.join([playerism, "\n"])
+        if self.hasMikeTrout(gameEvent):
+            playerism = "".join(["\n", self.formatMikeTroutisms(gameEvent['description'])])
         return playerism
 
 
@@ -333,7 +339,8 @@ class BaseballUpdaterBot:
             return True
         if self.linescoreStatusHasChanged(linescore):
             return True
-        if gameEvent['gameEvent'] == 'action' and "Stolen" not in gameEvent['event']:
+        if gameEvent['gameEvent'] == 'action' and (gameEvent['event'] not in ["Stolen Base", 'Balk', 'Wild Pitch', 'Defensive Indiff']):
+            print("gameEvent['event'] = action and gameEvent['event'] =", gameEvent['event'])
             return True
         return False
 
@@ -358,14 +365,16 @@ class BaseballUpdaterBot:
 
     def resetOutsGlobalLinescoreStatus(self):
         global globalLinescoreStatus
-        if globalLinescoreStatus[0] == "3": globalLinescoreStatus[0] == "0" # Make sure to reset outs to
+        if globalLinescoreStatus[0] == "3": # Make sure to reset outs to 0 if outs = 3
+            globalLinescoreStatus = ("0", globalLinescoreStatus[1], globalLinescoreStatus[2], globalLinescoreStatus[3],
+                                     globalLinescoreStatus[4], globalLinescoreStatus[5], globalLinescoreStatus[6], globalLinescoreStatus[7])
 
-    def checkGameStatus(self, linescore, idsOfPrevEvents):
+    def checkGameStatus(self, linescore, idsOfPrevEvents): #rain delay?
         id = linescore['status']['game_status_id']
         gameStatus = linescore['status']['game_status']
         if (gameStatus == "Warmup") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
-            em = self.warmupStatus()
+            em = self.warmupStatus(linescore)
             return em
         if (gameStatus == "In Progress") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
@@ -381,12 +390,24 @@ class BaseballUpdaterBot:
             return em
         return None
 
-    def warmupStatus(self):
-        return (discord.Embed(title='Game\'s about to start, everyone get in here!', description='HYPE HYPE HYPE HYPE.'),
-                "Meet the Mets, meet the Mets.  Step right up and greet the Mets...")
+    def warmupStatus(self, linescore):
+        if linescore['probableStartingPitchers'] is None:
+            # MTM url: "https://www.youtube.com/watch?v=6GsCmnZnllk"
+            pregamePost = "https://www.youtube.com/watch?v=6GsCmnZnllk"
+        else:
+            pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
+                          "{:<3}: {} {} ({}-{} {})".format(
+                linescore['away_team_name']['team_abbrev'], linescore['probableStartingPitchers']['away_pitcher']['throwinghand'],
+                linescore['probableStartingPitchers']['away_pitcher']['name'], linescore['probableStartingPitchers']['away_pitcher']['wins'],
+                linescore['probableStartingPitchers']['away_pitcher']['losses'], linescore['probableStartingPitchers']['away_pitcher']['era'],
+                linescore['home_team_name']['team_abbrev'], linescore['probableStartingPitchers']['home_pitcher']['throwinghand'],
+                linescore['probableStartingPitchers']['home_pitcher']['name'], linescore['probableStartingPitchers']['home_pitcher']['wins'],
+                linescore['probableStartingPitchers']['home_pitcher']['losses'], linescore['probableStartingPitchers']['home_pitcher']['era'])
+        return (discord.Embed(title='Game\'s about to start, everyone get in here!', description="Meet the Mets, meet the Mets.  Step right up and greet the Mets..."),
+                pregamePost)
 
-    def gameStartedStatus(self):
-        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "[starting pitchers stats]")
+    def gameStartedStatus(self): # Start of game post
+        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "Is Jose Reyes the new Daniel Murphy?  Only time will tell")
 
     def checkIfRainDelay(self):
         pass
@@ -412,7 +433,7 @@ class BaseballUpdaterBot:
                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
             )
             em = (discord.Embed(title=title, description=description),
-                  'http://i0.kym-cdn.com/photos/images/facebook/000/804/617/d5b.jpg') #Better luck next time!
+                  'https://puu.sh/wd9ZQ/c70f4179f5.jpg')
         return em
 
     def isFavoriteTeamWinning(self, linescore):
