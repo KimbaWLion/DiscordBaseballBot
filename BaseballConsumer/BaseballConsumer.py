@@ -13,7 +13,7 @@ Please contact us on Reddit or Github if you have any questions.
 
 '''
 
-from datetime import datetime ,timedelta
+from datetime import datetime, timedelta
 from game_events_parser import GameEventsParser
 from linescore_parser import LinescoreParser
 import time
@@ -26,6 +26,14 @@ import asyncio
 
 GAME_THREAD_LOG = r'<Path to game_thread.now>'
 SETTINGS_FILE = '../settings.json'
+
+# Emotes
+EMOTE_STRIKEOUT = "<:strikeout:345303176704032770>"
+EMOTE_STRIKEOUT_LOOKING = "<:strikeout2:345303176792113152>"
+EMOTE_RBI = "<:ribbies:345468637617848321>"
+EMOTE_HOMERUN = "<:ITSOUTTAHERE:345303176955822080>"
+EMOTE_GRAND_SLAM = "<:salami:345303176636792832>"
+EMOTE_OTHER_TEAM_RBI = ":("
 
 class BaseballUpdaterBot:
 
@@ -107,6 +115,44 @@ class BaseballUpdaterBot:
             return random.choice(mikeTroutism)
         return ""
 
+    def usePlayerNickNames(self, description):
+        newDesc = description
+        newDesc = description.replace("Jerry Blevins","Gordo")\
+            .replace("Chasen Bradford","Black Bear")\
+            .replace("Asdrubal Cabrera","Chiquitín")\
+            .replace("Gavin Cecchini","Cheech")\
+            .replace("Yoenis Cespedes","La Potencia")\
+            .replace("Michael Conforto","Scooter")\
+            .replace("Travis d'Arnaud","Lil D")\
+            .replace("Jacob deGrom","Jake")\
+            .replace("Josh Edgin","Edge")\
+            .replace("Jeurys Familia","La Fama")\
+            .replace("Chris Flexen","Big Baby")\
+            .replace("Wilmer Flores","Catire")\
+            .replace("Erik Goeddel","Goopy")\
+            .replace("Robert Gsellman","G-Man")\
+            .replace("Matt Harvey","Harv")\
+            .replace("Juan Lagares","Angelo")\
+            .replace("Seth Lugo","Quarterrican")\
+            .replace("Steven Matz","Reno")\
+            .replace("Tommy Milone","Milone")\
+            .replace("Rafael Montero","Fugarra")\
+            .replace("Brandon Nimmo","Nimms")\
+            .replace("Tyler Pill","Pilly")\
+            .replace("Kevin Plawecki","Plaw")\
+            .replace("AJ Ramos","Junior")\
+            .replace("Jose Reyes","La Melaza")\
+            .replace("Matt Reynolds","Rey Rey")\
+            .replace("T.J. Rivera","T-Butta")\
+            .replace("Hansel Robles","El Peñaco")\
+            .replace("Amed Rosario","El Niño")\
+            .replace("Fernando Salas","Ferny")\
+            .replace("Paul Sewald","Paulie")\
+            .replace("Josh Smoker","Brown Bear")\
+            .replace("Noah Syndergaard","Thor")\
+            .replace("Zack Wheeler","Wheels")\
+            .replace("David Wright","D-Dub")
+        return newDesc
 
     def formatGameEventForDiscord(self, gameEvent, linescore):
         return "```" \
@@ -116,7 +162,7 @@ class BaseballUpdaterBot:
                "{}" \
                "{}".format(self.formatLinescoreForDiscord(gameEvent, linescore),
                            self.formatPitchCount(gameEvent['gameEvent'], gameEvent['balls'], gameEvent['strikes']),
-                           gameEvent['description'],
+                           self.usePlayerNickNames(gameEvent['description']),
                            self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(gameEvent))
 
@@ -171,26 +217,34 @@ class BaseballUpdaterBot:
         playerism = ""
         event = gameEvent['event']
         if self.favoriteTeamIsBatting(gameEvent, linescore):
-            if "Home Run" in event and gameEvent['rbi'] != "4": playerism = ''.join([playerism, "<:ITSOUTTAHERE:257607350133719040>\n"])
-            if "Home Run" in event and gameEvent['rbi'] == "4": playerism = ''.join([playerism, "<:salami:323333927936983040>\n"])
+            # Favorite team batting
+            if "Home Run" in event and gameEvent['rbi'] != "4": playerism = ''.join([playerism, EMOTE_HOMERUN, "\n"])
+            if "Home Run" in event and gameEvent['rbi'] == "4": playerism = ''.join([playerism, EMOTE_GRAND_SLAM, "\n"])
             if gameEvent['rbi'] is not None:
                 for i in range(int(gameEvent['rbi'])):
-                    playerism = ''.join([playerism, "<:ribbies:321805919488966666> "])
+                    playerism = ''.join([playerism, EMOTE_RBI, " "])
         else:
+            # Favorite team pitching
             if "Strikeout" in event:
                 global metsStaffKTrackerTuple
                 if "strikes out" in gameEvent['description']:
-                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0],"<:Strikeout:257620664209506304>"]), metsStaffKTrackerTuple[1] + 1, metsStaffKTrackerTuple[2])
+                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0], EMOTE_STRIKEOUT]), metsStaffKTrackerTuple[1] + 1, metsStaffKTrackerTuple[2])
                 if "called out on strike" in gameEvent['description']:
-                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0],"<:Strikeout2:257620669527883777>"]), metsStaffKTrackerTuple[1], metsStaffKTrackerTuple[2] + 1)
+                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0], EMOTE_STRIKEOUT_LOOKING]), metsStaffKTrackerTuple[1], metsStaffKTrackerTuple[2] + 1)
 
                 if metsStaffKTrackerTuple[1] == 3 and metsStaffKTrackerTuple[2] == 0:
-                    playerism = "Strikeout tracker: 3 <:Strikeout:257620664209506304>s"
+                    playerism = "".join(["Strikeout tracker: 3 ", EMOTE_STRIKEOUT, "s"])
                 else:
                     playerism = "".join(["Strikeout tracker: ", metsStaffKTrackerTuple[0]])
+
+            # Opponents batting
+            if gameEvent['rbi'] is not None:
+                for i in range(int(gameEvent['rbi'])):
+                    playerism = ''.join([playerism, EMOTE_OTHER_TEAM_RBI, " "])
+
         playerism = ''.join([playerism, "\n"])
         if self.hasMikeTrout(gameEvent):
-            playerism = "".join(["\n", self.formatMikeTroutisms(gameEvent['description'])])
+            playerism = "".join([playerism, self.formatMikeTroutisms(gameEvent['description'])])
         return playerism
 
 
@@ -207,12 +261,12 @@ class BaseballUpdaterBot:
         log.close()
         return idsFromLog
 
-    def printToLog(self, atbat):
+    def printToLog(self, atbat, linescore):
         with open(GAME_THREAD_LOG, "a") as log:
             id = atbat['id'] if atbat['id'] is not None else "NoIdInJSONFile"
             log.write("[{}] [{}] | {}\n".format(self.getTime(), id, self.formatAtBatLineForLog(atbat)))
         log.close()
-        print("[{}] New atBat: {}".format(self.getTime(), self.formatAtBatLineForLog(atbat)))
+        print("[{}] New atBat: {} {}".format(self.getTime(), self.formatAtBatLineForLog(atbat), self.getLinescoreStatus(linescore)))
 
     def printGameStatusToLog(self, id, gameStatus):
         with open(GAME_THREAD_LOG, "a") as log:
@@ -313,9 +367,9 @@ class BaseballUpdaterBot:
                             if not self.linescoreAndGameEventsInSync(linescore, gameEvent):
                                 break
                             self.updateGlobalLinescoreStatus(linescore)
-                            self.printToLog(gameEvent)
-                            await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
                             self.resetOutsGlobalLinescoreStatus()
+                            self.printToLog(gameEvent, linescore)
+                            await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
                             idsOfPrevEvents = self.getEventIdsFromLog()
 
                     # Check if game status changed
@@ -339,10 +393,19 @@ class BaseballUpdaterBot:
             return True
         if self.linescoreStatusHasChanged(linescore):
             return True
-        if gameEvent['gameEvent'] == 'action' and (gameEvent['event'] not in ["Stolen Base", 'Balk', 'Wild Pitch', 'Defensive Indiff']):
-            print("gameEvent['event'] = action and gameEvent['event'] =", gameEvent['event'])
+        if self.baseStatusChangingGameAction(gameEvent):
             return True
         return False
+
+    def baseStatusChangingGameAction(self, gameEvent):
+        actionIsBaseStatusChanging = False
+        if 'Stolen Base' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Balk' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Wild Pitch' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Defensive Indiff' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Pickoff' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Passed Ball' in gameEvent['event']: actionIsBaseStatusChanging = True
+        return gameEvent['gameEvent'] == 'action' and not actionIsBaseStatusChanging
 
     def linescoreStatusHasChanged(self, linescore):
         global globalLinescoreStatus
@@ -365,7 +428,7 @@ class BaseballUpdaterBot:
 
     def resetOutsGlobalLinescoreStatus(self):
         global globalLinescoreStatus
-        if globalLinescoreStatus[0] == "3": # Make sure to reset outs to 0 if outs = 3
+        if globalLinescoreStatus[0] == "3": # Make sure to reset outs to 0 if outs = 3 (NOTE: will be out of sync from file's current linescore status)
             globalLinescoreStatus = ("0", globalLinescoreStatus[1], globalLinescoreStatus[2], globalLinescoreStatus[3],
                                      globalLinescoreStatus[4], globalLinescoreStatus[5], globalLinescoreStatus[6], globalLinescoreStatus[7])
 
@@ -407,7 +470,7 @@ class BaseballUpdaterBot:
                 pregamePost)
 
     def gameStartedStatus(self): # Start of game post
-        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "Is Jose Reyes the new Daniel Murphy?  Only time will tell")
+        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "Who's on first?  What's on second?  And I don't know is on third.")
 
     def checkIfRainDelay(self):
         pass
@@ -432,8 +495,12 @@ class BaseballUpdaterBot:
                 otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
             )
+            tank = random.choice(["http://vignette1.wikia.nocookie.net/commando2/images/7/7b/Tank_Commando_2_Shape_3307.png/revision/latest?cb=20130320065142",
+                                  "https://s-media-cache-ak0.pinimg.com/736x/1d/e1/74/1de17423fc34fbd265c4c415cd12c4c1--machine-of-death-joseph-stalin.jpg",
+                                  "https://cdn-images-1.medium.com/max/2000/1*bxatJbBM_aeyEqDUc2Ht5Q.jpeg",
+                                  "https://s-media-cache-ak0.pinimg.com/736x/16/d0/37/16d03795f35ccfeb4b7c60e55cfbec08--fish-aquariums-aquarium-fish.jpg"])
             em = (discord.Embed(title=title, description=description),
-                  'https://puu.sh/wd9ZQ/c70f4179f5.jpg')
+                  tank)  #''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
         return em
 
     def isFavoriteTeamWinning(self, linescore):
