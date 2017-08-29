@@ -23,7 +23,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 3. Create a blank file BaseballConsumer/logs/game_thread.now
 4. in BaseballConsumer/BaseballConsumer.py, change line 27 to the path of the game_thread.now file.  (i.e. 'C:\Users...\game_thread.now')
 5. Make sure to download discord.py, aiohttp.py, asyncio.py packages
-6. Make sure you are running a python interpretter version 3.5+.  If you're not, [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def)
+6. Make sure you are running a python interpretter version 3.5+.  If you're not, [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).  (If you are running on a mac and python 3.6+, you need to install the certificates.  Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
 7. run MainEntryBot.py the day of the game
 8. When game is finished, wait until the next day and run MainEntryBot.py again
 
