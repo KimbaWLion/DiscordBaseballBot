@@ -127,6 +127,9 @@ class LinescoreParser:
         statusInfoMap['game_status'] = data.get('status')
         statusInfoMap['game_status_id'] = "".join([data.get('id'), statusInfoMap['game_status'].replace(" ", "")])
         statusInfoMap['runnerOnBaseStatus'] = data.get('runner_on_base_status')
+        statusInfoMap['runner_on_1b'] = 'runner_on_1b' in data
+        statusInfoMap['runner_on_2b'] = 'runner_on_2b' in data
+        statusInfoMap['runner_on_3b'] = 'runner_on_3b' in data
         statusInfoMap['outs'] = data.get('outs')
         statusInfoMap['currentInning'] = data.get('inning')
         return statusInfoMap
