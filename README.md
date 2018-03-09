@@ -122,6 +122,10 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
 
 # Buglog
+* 3-8-18
+  * ~~MLB.com changed how they use `runner_on_base_status` in the linescore.  Before it used to be a number 0-7 that said whether there were men on the bases, where 1 meant man on first, 3 meant man on third, 4 meant men on first and second, and 7 mean bases loaded.  Now there are attributes `runner_on_1b`, `runner_on_2b`, and `runner_on_3b`, which lists which player_id is on each bag.~~
+    * I fixed this by calling tracking runner_on_1b instead of runner_on_base_status
+  * The urls are not splitting anymore by '\n'.  I have no clue why, but it's messing with actually finding the URLs of the game, and splitting by a single space (' ') doesn't seem to be working.  
 * 8-26-17
   * If a game event happens but there is no RBI, bot does not post an emoji about a run scored.  An example of this is if a wild pitch scores a runner.  The gameEvents JSON has "score: T", and I should try to find a way to use that to post when there are runs scored, not just when there are RBIs
 * 5-8-17
