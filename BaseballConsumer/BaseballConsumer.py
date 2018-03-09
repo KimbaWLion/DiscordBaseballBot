@@ -22,10 +22,10 @@ import logging
 import aiohttp
 import discord
 import random
-import asyncio
 
 GAME_THREAD_LOG = r'<Path to game_thread.now>'
 SETTINGS_FILE = '../settings.json'
+
 
 # Emotes
 EMOTE_STRIKEOUT = "<:strikeout:345303176704032770>"
@@ -34,6 +34,34 @@ EMOTE_RBI = "<:ribbies:345468637617848321>"
 EMOTE_HOMERUN = "<:ITSOUTTAHERE:345303176955822080>"
 EMOTE_GRAND_SLAM = "<:salami:345303176636792832>"
 EMOTE_OTHER_TEAM_RBI = ":("
+EMOTE_OTHER_TEAM_STRIKEOUT = "K"
+EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING = "ꓘ"
+
+# Game Status Constants
+WARMUP_TITLE = 'Game\'s about to start, everyone get in here!'
+WARMUP_DESCRIPTION = "Welcome to Spring training!" # Meet the Mets, meet the Mets.  Step right up and greet the Mets...
+WARMUP_BODY_ALTERNATIVE = "https://www.youtube.com/watch?v=6GsCmnZnllk" # MTM https://www.youtube.com/watch?v=6GsCmnZnllk
+
+GAMESTARTED_TITLE = 'Play ball!'
+GAMESTARTED_DESCRIPTION = 'I\'m back... back again...'
+GAMESTARTED_BODY = "This bot is still a work in progress, please let me know if anything seems wrong (like runners on the bases)."
+
+RAINDELAY_TITLE = 'Rain Delay'
+RAINDELAY_DESCRIPTION = 'Rain delay stats?'
+RAINDELAY_BODY = 'Rain rain, go away.  Come on back another day.'
+
+POSTPONED_TITLE = 'Game Postponed'
+POSTPONED_DESCRIPTION = "Game's over, makeup to be played later"
+POSTPONED_BODY = '<Game postponed body>'
+
+COMPLETEDEARLY_TITLE = 'Game Completed Early'
+COMPLETEDEARLY_DESCRIPTION = 'Magic 8 ball, will this game resume sometime tonight?'
+COMPLETEDEARLY_BODY = '8-ball: "No chance in hell!"'
+
+GAMEENDED_WIN_TITLE = 'Put it in the books!'
+GAMEENDED_WIN_BODY = 'https://www.youtube.com/watch?v=mmwic9kFx2c' ## (TCB)
+GAMEENDED_LOSS_TITLE = 'Mets defeated'
+GAMEENDED_LOSS_BODY = '*shrug* it\'s only Spring Training' ## (dolphin) ''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
 
 class BaseballUpdaterBot:
 
@@ -81,78 +109,18 @@ class BaseballUpdaterBot:
             atbat['topOrBot'], atbat['inning'], atbat['balls'], atbat['strikes'],
             atbat['outs'] ,atbat['result'], atbat['description'])
 
-    def hasMikeTrout(self, gameEvent):
+    def hasPlayerQuip(self, gameEvent):
         if "Chase Utley" in gameEvent['description']: return True
         return False
 
-    def formatMikeTroutisms(self, description):
+    def formatPlayerQuips(self, description):
         if "Chase Utley" in description:
-            mikeTroutism = [
-                #"Isn't Mike Trout just like, the cutest?",
-                #"<3 Mike Trout <3",
-                #"OMG, did you see Mike run?  He's like, so fast!",
-                #"I could lay down and listen to Mike tell me the weather for hours...",
-                #"Fuck, Marry, Kill.  Mike Trout, Mike Trout, and not Mike Trout.  Go",
-                #"I'd swim upstream to spawn with Mike Trout.",
-                #":) Trout-y :)",
-                #"Seeing Mike Trout play makes me feel everything is right with the world.",
-                #"No one hits like Mike Trout, matches wits like Mike Trout, in a spitting match nobody spits like Mike Trout...",
-                #"It's a bird!  It's a plane!  No, it's Mike Trout!",
-                #"I just wanna hug Mike Trout, he looks so squishy.",
-                #"9 out of 10 destists recommend Mike Trout.",
-                #"Mike Trout allows children to eat ice cream for breakfast.",
-                #"Mike Trout's like my favorite player ever.",
-                #"Gimme a M-I-K-E!  Gimme a T-R-O-U-T!  What does that spell?!?!?",
-                #"Mike Trout always tips his taxi drivers",
-                #"Mike Trout 2020!",
-                #"Mike Trout always did his chores and made his bed before playing video games as a kid.",
-                #"Did you know that tuortekim is Mike Trout backwards?",
-                #"Robbing homeruns and catches at his shoestrings,\nScoring RBIs guaranteed with one swing,\nNot being injured from shoddy hamstrings,\nMike Trout does a few of my favorite things.",
-                #"I'm so glad I get to watch Mike Trout play every single day"
+            playerQuips = [
                 "Fuck Chase Utley",
                 "uck-Fay ase_Utley-Chay"
             ]
-            return random.choice(mikeTroutism)
+            return random.choice(playerQuips)
         return ""
-
-    def usePlayerNickNames(self, description):
-        newDesc = description
-        newDesc = description.replace("Jerry Blevins","Gordo")\
-            .replace("Chasen Bradford","Black Bear")\
-            .replace("Asdrubal Cabrera","Chiquitín")\
-            .replace("Gavin Cecchini","Cheech")\
-            .replace("Yoenis Cespedes","La Potencia")\
-            .replace("Michael Conforto","Scooter")\
-            .replace("Travis d'Arnaud","Lil D")\
-            .replace("Jacob deGrom","Jake")\
-            .replace("Josh Edgin","Edge")\
-            .replace("Jeurys Familia","La Fama")\
-            .replace("Chris Flexen","Big Baby")\
-            .replace("Wilmer Flores","Catire")\
-            .replace("Erik Goeddel","Goopy")\
-            .replace("Robert Gsellman","G-Man")\
-            .replace("Matt Harvey","Harv")\
-            .replace("Juan Lagares","Angelo")\
-            .replace("Seth Lugo","Quarterrican")\
-            .replace("Steven Matz","Reno")\
-            .replace("Tommy Milone","Milone")\
-            .replace("Rafael Montero","Fugarra")\
-            .replace("Brandon Nimmo","Nimms")\
-            .replace("Tyler Pill","Pilly")\
-            .replace("Kevin Plawecki","Plaw")\
-            .replace("AJ Ramos","Junior")\
-            .replace("Jose Reyes","La Melaza")\
-            .replace("Matt Reynolds","Rey Rey")\
-            .replace("T.J. Rivera","T-Butta")\
-            .replace("Hansel Robles","El Peñaco")\
-            .replace("Amed Rosario","El Niño")\
-            .replace("Fernando Salas","Ferny")\
-            .replace("Paul Sewald","Paulie")\
-            .replace("Josh Smoker","Brown Bear")\
-            .replace("Noah Syndergaard","Thor")\
-            .replace("Zack Wheeler","Wheels")\
-            .replace("David Wright","D-Dub")
-        return newDesc
 
     def formatGameEventForDiscord(self, gameEvent, linescore):
         return "```" \
@@ -162,7 +130,7 @@ class BaseballUpdaterBot:
                "{}" \
                "{}".format(self.formatLinescoreForDiscord(gameEvent, linescore),
                            self.formatPitchCount(gameEvent['gameEvent'], gameEvent['balls'], gameEvent['strikes']),
-                           self.usePlayerNickNames(gameEvent['description']),
+                           gameEvent['description'],
                            self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(gameEvent))
 
@@ -173,10 +141,10 @@ class BaseballUpdaterBot:
                "{}   │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
                "         └───┴──┴──┴──┘".format(
             self.formatInning(gameEvent),
-            self.formatSecondBase(linescore['status']['runnerOnBaseStatus']),
+            self.formatSecondBase(linescore['status']['runner_on_2b']),
             linescore['away_team_name']['team_abbrev'], linescore['away_team_stats']['team_runs'],
             linescore['away_team_stats']['team_hits'], linescore['away_team_stats']['team_errors'],
-            self.formatThirdBase(linescore['status']['runnerOnBaseStatus']), self.formatFirstBase(linescore['status']['runnerOnBaseStatus']),
+            self.formatThirdBase(linescore['status']['runner_on_3b']), self.formatFirstBase(linescore['status']['runner_on_1b']),
             self.formatOuts(gameEvent['outs']),
             linescore['home_team_name']['team_abbrev'], linescore['home_team_stats']['team_runs'],
             linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors']
@@ -190,14 +158,14 @@ class BaseballUpdaterBot:
         if outs is "1": outOrOuts = "  Out"
         return "".join([outs, outOrOuts])
 
+    def formatFirstBase(self, runnerOnBaseStatus):
+        return self.formatBase(runnerOnBaseStatus)
+
     def formatSecondBase(self, runnerOnBaseStatus):
-        return self.formatBase(runnerOnBaseStatus in ("2", "4", "6", "7"))
+        return self.formatBase(runnerOnBaseStatus)
 
     def formatThirdBase(self, runnerOnBaseStatus):
-        return self.formatBase(runnerOnBaseStatus in ("3", "5", "6", "7"))
-
-    def formatFirstBase(self, runnerOnBaseStatus):
-        return self.formatBase(runnerOnBaseStatus in ("1", "4", "5", "7"))
+        return self.formatBase(runnerOnBaseStatus)
 
     def formatBase(self, baseOccupied):
         if baseOccupied:
@@ -223,19 +191,30 @@ class BaseballUpdaterBot:
             if gameEvent['rbi'] is not None:
                 for i in range(int(gameEvent['rbi'])):
                     playerism = ''.join([playerism, EMOTE_RBI, " "])
+            if "Strikeout" in event:
+                global otherTeamKTrackerTuple
+                if "strikes out" in gameEvent['description']:
+                    otherTeamKTrackerTuple = ("".join([otherTeamKTrackerTuple[0], EMOTE_OTHER_TEAM_STRIKEOUT]), otherTeamKTrackerTuple[1] + 1, otherTeamKTrackerTuple[2])
+                if "called out on strike" in gameEvent['description']:
+                    otherTeamKTrackerTuple = ("".join([otherTeamKTrackerTuple[0], EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING]), otherTeamKTrackerTuple[1], otherTeamKTrackerTuple[2] + 1)
+
+                if otherTeamKTrackerTuple[1] == 3 and otherTeamKTrackerTuple[2] == 0:
+                    playerism = "".join(["Strikeout tracker: 3 ", EMOTE_OTHER_TEAM_STRIKEOUT, "s"])
+                else:
+                    playerism = "".join(["Strikeout tracker: ", otherTeamKTrackerTuple[0]])
         else:
             # Favorite team pitching
             if "Strikeout" in event:
-                global metsStaffKTrackerTuple
+                global favTeamKTrackerTuple
                 if "strikes out" in gameEvent['description']:
-                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0], EMOTE_STRIKEOUT]), metsStaffKTrackerTuple[1] + 1, metsStaffKTrackerTuple[2])
+                    favTeamKTrackerTuple = ("".join([favTeamKTrackerTuple[0], EMOTE_STRIKEOUT]), favTeamKTrackerTuple[1] + 1, favTeamKTrackerTuple[2])
                 if "called out on strike" in gameEvent['description']:
-                    metsStaffKTrackerTuple = ("".join([metsStaffKTrackerTuple[0], EMOTE_STRIKEOUT_LOOKING]), metsStaffKTrackerTuple[1], metsStaffKTrackerTuple[2] + 1)
+                    favTeamKTrackerTuple = ("".join([favTeamKTrackerTuple[0], EMOTE_STRIKEOUT_LOOKING]), favTeamKTrackerTuple[1], favTeamKTrackerTuple[2] + 1)
 
-                if metsStaffKTrackerTuple[1] == 3 and metsStaffKTrackerTuple[2] == 0:
+                if favTeamKTrackerTuple[1] == 3 and favTeamKTrackerTuple[2] == 0:
                     playerism = "".join(["Strikeout tracker: 3 ", EMOTE_STRIKEOUT, "s"])
                 else:
-                    playerism = "".join(["Strikeout tracker: ", metsStaffKTrackerTuple[0]])
+                    playerism = "".join(["Strikeout tracker: ", favTeamKTrackerTuple[0]])
 
             # Opponents batting
             if gameEvent['rbi'] is not None:
@@ -243,8 +222,8 @@ class BaseballUpdaterBot:
                     playerism = ''.join([playerism, EMOTE_OTHER_TEAM_RBI, " "])
 
         playerism = ''.join([playerism, "\n"])
-        if self.hasMikeTrout(gameEvent):
-            playerism = "".join([playerism, self.formatMikeTroutisms(gameEvent['description'])])
+        if self.hasPlayerQuip(gameEvent):
+            playerism = "".join([playerism, self.formatPlayerQuips(gameEvent['description'])])
         return playerism
 
 
@@ -294,10 +273,11 @@ class BaseballUpdaterBot:
         # initialize the globalLinescoreStatus variable
         global globalLinescoreStatus
         globalLinescoreStatus = ("0", "0", "0", "0", "0", "0", "0", "0")
-        # initialize metsStaffKTrackerTuple variable: string, swinging Ks, looking Ks
-        global metsStaffKTrackerTuple
-        metsStaffKTrackerTuple = ("", 0, 0)
-
+        # initialize favTeamKTrackerTuple variable: string, swinging Ks, looking Ks
+        global favTeamKTrackerTuple
+        favTeamKTrackerTuple = ("", 0, 0)
+        global otherTeamKTrackerTuple
+        otherTeamKTrackerTuple = ("", 0, 0)
 
         response = None
         directories = []
@@ -308,7 +288,7 @@ class BaseballUpdaterBot:
 
             url = "http://gd2.mlb.com/components/game/mlb/"
             url = url + "year_" + todaysGame.strftime("%Y") + "/month_" + todaysGame.strftime \
-                ("%m") + "/day_" + todaysGame.strftime("%d") + "/"
+                ("%m") + "/day_" + todaysGame.strftime("%d")
 
             while not response:
                 print("[{}] Searching for day's URL...".format(self.getTime()))
@@ -327,7 +307,7 @@ class BaseballUpdaterBot:
                                     if self.TEAM_CODE in v:
                                         v = v[v.index("\"") + 1:len(v)]
                                         v = v[0:v.index("\"")]
-                                        directories.append(url + v)
+                                        directories.append(url + "/" + v[7:])
                                         print("[{}] Found game directory for team {}: {}".format(self.getTime(),
                                                                                                  self.TEAM_CODE,
                                                                                                  directories))
@@ -363,7 +343,7 @@ class BaseballUpdaterBot:
                     for gameEvent in listOfGameEvents:
                         id = (gameEvent['id'] if gameEvent['id'] is not None else "NoIdInJSONFile")
                         if id == "NoIdInJSONFile": print("A game event ID is None, figure out why") # to help debug
-                        if id not in idsOfPrevEvents:  # and self.hasMikeTrout(gameEvent):
+                        if id not in idsOfPrevEvents:
                             if not self.linescoreAndGameEventsInSync(linescore, gameEvent):
                                 break
                             self.updateGlobalLinescoreStatus(linescore)
@@ -405,6 +385,8 @@ class BaseballUpdaterBot:
         if 'Defensive Indiff' in gameEvent['event']: actionIsBaseStatusChanging = True
         if 'Pickoff' in gameEvent['event']: actionIsBaseStatusChanging = True
         if 'Passed Ball' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Caught Stealing' in gameEvent['event']: actionIsBaseStatusChanging = True
+        if 'Picked off stealing' in gameEvent['event']: actionIsBaseStatusChanging = True
         return gameEvent['gameEvent'] == 'action' and not actionIsBaseStatusChanging
 
     def linescoreStatusHasChanged(self, linescore):
@@ -443,9 +425,17 @@ class BaseballUpdaterBot:
             self.printGameStatusToLog(id, gameStatus)
             em = self.gameStartedStatus()
             return em
+        if (gameStatus == "Delayed") and (id not in idsOfPrevEvents):
+            self.printGameStatusToLog(id, gameStatus)
+            em = self.gameDelayedStatus()
+            return em
         if (gameStatus == "Postponed") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
-            em = (discord.Embed(title='Game is postponed', description='To be made up later'), "Rain delay stats?")
+            em = self.gamePostponedStatus()
+            return em
+        if (gameStatus == "Completed Early") and (id not in idsOfPrevEvents):
+            self.printGameStatusToLog(id, gameStatus)
+            em = self.gameCompletedEarlyStatus()
             return em
         if (gameStatus == "Game Over") and (id not in idsOfPrevEvents):
             self.printGameStatusToLog(id, gameStatus)
@@ -455,8 +445,7 @@ class BaseballUpdaterBot:
 
     def warmupStatus(self, linescore):
         if linescore['probableStartingPitchers'] is None:
-            # MTM url: "https://www.youtube.com/watch?v=6GsCmnZnllk"
-            pregamePost = "https://www.youtube.com/watch?v=6GsCmnZnllk"
+            pregamePost = WARMUP_BODY_ALTERNATIVE
         else:
             pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
                           "{:<3}: {} {} ({}-{} {})".format(
@@ -466,41 +455,49 @@ class BaseballUpdaterBot:
                 linescore['home_team_name']['team_abbrev'], linescore['probableStartingPitchers']['home_pitcher']['throwinghand'],
                 linescore['probableStartingPitchers']['home_pitcher']['name'], linescore['probableStartingPitchers']['home_pitcher']['wins'],
                 linescore['probableStartingPitchers']['home_pitcher']['losses'], linescore['probableStartingPitchers']['home_pitcher']['era'])
-        return (discord.Embed(title='Game\'s about to start, everyone get in here!', description="Meet the Mets, meet the Mets.  Step right up and greet the Mets..."),
+        return (discord.Embed(title=WARMUP_TITLE, description=WARMUP_DESCRIPTION),
                 pregamePost)
 
     def gameStartedStatus(self): # Start of game post
-        return (discord.Embed(title='Play ball!', description='Mets game has started.'), "Who's on first?  What's on second?  And I don't know is on third.")
+        return (discord.Embed(title=GAMESTARTED_TITLE, description=GAMESTARTED_DESCRIPTION), GAMESTARTED_BODY)
 
-    def checkIfRainDelay(self):
-        pass
+    def gameDelayedStatus(self):
+        em = (discord.Embed(title=RAINDELAY_TITLE, description=RAINDELAY_DESCRIPTION),
+              RAINDELAY_BODY)
+        return em
+
+    def gamePostponedStatus(self):
+        em = (discord.Embed(title=POSTPONED_TITLE, description=POSTPONED_DESCRIPTION),
+              POSTPONED_BODY)
+        return em
+
+    def gameCompletedEarlyStatus(self):
+        em = (discord.Embed(title=COMPLETEDEARLY_TITLE, description=COMPLETEDEARLY_DESCRIPTION),
+              COMPLETEDEARLY_BODY)
+        return em
 
     def gameEndedStatus(self, linescore):
         favoriteTeamWLRecord = self.getFavoriteTeamWLRecord(linescore)
         otherTeamWLRecord = self.getOtherTeamWLRecord(linescore)
         if self.isFavoriteTeamWinning(linescore):
             # TCB url 'https://www.youtube.com/watch?v=mmwic9kFx2c'
-            title = 'Put it in the books!'
+            title = GAMEENDED_WIN_TITLE
             description = '{} ({}-{}) beat the {} ({}-{}) by a score of {}-{}!'.format(
                 favoriteTeamWLRecord[0], favoriteTeamWLRecord[1], favoriteTeamWLRecord[2],
                 otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
             )
             em = (discord.Embed(title=title, description=description),
-                  'https://www.youtube.com/watch?v=mmwic9kFx2c')
+                  GAMEENDED_WIN_BODY)
         else:
-            title = 'Mets defeated'
+            title = GAMEENDED_LOSS_TITLE
             description = '{} ({}-{}) were defeated by the {} ({}-{}) by a score of {}-{}'.format(
                 favoriteTeamWLRecord[0], favoriteTeamWLRecord[1], favoriteTeamWLRecord[2],
                 otherTeamWLRecord[0], otherTeamWLRecord[1], otherTeamWLRecord[2],
                 linescore['away_team_stats']['team_runs'], linescore['home_team_stats']['team_runs']
             )
-            tank = random.choice(["http://vignette1.wikia.nocookie.net/commando2/images/7/7b/Tank_Commando_2_Shape_3307.png/revision/latest?cb=20130320065142",
-                                  "https://s-media-cache-ak0.pinimg.com/736x/1d/e1/74/1de17423fc34fbd265c4c415cd12c4c1--machine-of-death-joseph-stalin.jpg",
-                                  "https://cdn-images-1.medium.com/max/2000/1*bxatJbBM_aeyEqDUc2Ht5Q.jpeg",
-                                  "https://s-media-cache-ak0.pinimg.com/736x/16/d0/37/16d03795f35ccfeb4b7c60e55cfbec08--fish-aquariums-aquarium-fish.jpg"])
             em = (discord.Embed(title=title, description=description),
-                  tank)  #''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
+                  GAMEENDED_LOSS_BODY)
         return em
 
     def isFavoriteTeamWinning(self, linescore):
