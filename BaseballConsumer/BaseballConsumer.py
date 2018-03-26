@@ -26,7 +26,6 @@ import random
 GAME_THREAD_LOG = r'<Path to game_thread.now>'
 SETTINGS_FILE = '../settings.json'
 
-
 # Emotes
 EMOTE_STRIKEOUT = "<:strikeout:345303176704032770>"
 EMOTE_STRIKEOUT_LOOKING = "<:strikeout2:345303176792113152>"
@@ -134,6 +133,15 @@ class BaseballUpdaterBot:
                            self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(gameEvent))
 
+    def formatPlayerChangeForDiscord(self, gameEvent, linescore):
+        return "```" \
+               "{}\n" \
+               "```\n" \
+               "{}" \
+               "{}".format(gameEvent['description'],
+                           self.playerismsAndEmoji(gameEvent, linescore),
+                           self.endOfInning(gameEvent))
+
     def formatLinescoreForDiscord(self, gameEvent, linescore):
         return "{}   ┌───┬──┬──┬──┐\n" \
                "   {}     │{:<3}│{:>2}│{:>2}│{:>2}│\n" \
@@ -226,7 +234,6 @@ class BaseballUpdaterBot:
             playerism = "".join([playerism, self.formatPlayerQuips(gameEvent['description'])])
         return playerism
 
-
     def favoriteTeamIsBatting(self, gameEvent, linescore):
         return (self.favoriteTeamIsHomeTeam(linescore) and gameEvent['topOrBot'] == "BOT" or not self.favoriteTeamIsHomeTeam(linescore) and gameEvent['topOrBot'] == "TOP")
 
@@ -254,8 +261,19 @@ class BaseballUpdaterBot:
         print("[{}] Game Status: {}".format(self.getTime(), gameStatus))
 
     def commentOnDiscord(self, gameEvent, linescore):
-        comment = self.formatGameEventForDiscord(gameEvent, linescore)
+        if self.gameUpdateIsPlayerChange(gameEvent):
+            comment = self.formatPlayerChangeForDiscord(gameEvent, linescore)
+        else:
+            comment = self.formatGameEventForDiscord(gameEvent, linescore)
         return comment
+
+    def gameUpdateIsPlayerChange(self, gameEvent):
+        isPlayerChange = False
+        if 'Pitching Substitution' in gameEvent['event']: isPlayerChange = True
+        if 'Defensive Sub' in gameEvent['event']: isPlayerChange = True
+        if 'Defensive Switch' in gameEvent['event']: isPlayerChange = True
+        if 'Offensive Sub' in gameEvent['event']: isPlayerChange = True
+        return isPlayerChange
 
     async def run(self, client, channel):
         error_msg = self.read_settings()
@@ -272,7 +290,7 @@ class BaseballUpdaterBot:
 
         # initialize the globalLinescoreStatus variable
         global globalLinescoreStatus
-        globalLinescoreStatus = ("0", "0", "0", "0", "0", "0", "0", "0")
+        globalLinescoreStatus = ("0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0")
         # initialize favTeamKTrackerTuple variable: string, swinging Ks, looking Ks
         global favTeamKTrackerTuple
         favTeamKTrackerTuple = ("", 0, 0)
@@ -281,10 +299,17 @@ class BaseballUpdaterBot:
 
         response = None
         directories = []
-        while True:
-            todaysGame = datetime.now() - timedelta(hours = 5)
 
-            # if response.time is not todaysGame, response = None, directories = []
+        todaysGame = datetime.now() - timedelta(hours=5)
+
+        while True:
+            if todaysGame.day is not (datetime.now()-timedelta(hours=5)).day:
+                todaysGame = datetime.now() - timedelta(hours=5)
+                favTeamKTrackerTuple = ("", 0, 0)
+                otherTeamKTrackerTuple = ("", 0, 0)
+                response = None
+                directories = []
+                print("[{}] New Day".format(self.getTime()))
 
             url = "http://gd2.mlb.com/components/game/mlb/"
             url = url + "year_" + todaysGame.strftime("%Y") + "/month_" + todaysGame.strftime \
@@ -300,7 +325,7 @@ class BaseballUpdaterBot:
                                 print("[{}] Found day's URL: {}".format(self.getTime(), url))
                                 response = await resp.text()
 
-                                html = response.split('\n')
+                                html = response.split(' ')
 
                                 # Get the gid directory based on team code (NYM is nyn)
                                 for v in html:
@@ -342,7 +367,6 @@ class BaseballUpdaterBot:
                     # Check if new game event
                     for gameEvent in listOfGameEvents:
                         id = (gameEvent['id'] if gameEvent['id'] is not None else "NoIdInJSONFile")
-                        if id == "NoIdInJSONFile": print("A game event ID is None, figure out why") # to help debug
                         if id not in idsOfPrevEvents:
                             if not self.linescoreAndGameEventsInSync(linescore, gameEvent):
                                 break
@@ -398,8 +422,9 @@ class BaseballUpdaterBot:
         return False
 
     def getLinescoreStatus(self, linescore):
-        # Outs, Base status, Home runs, Home hits, Home errors, Away run, Away hits, Away errors
+        # Outs, Base status, runner on 1b, runner on 2b, runner on 3b, Home runs, Home hits, Home errors, Away run, Away hits, Away errors
         return (linescore['status']['outs'], linescore['status']['runnerOnBaseStatus'],
+                linescore['status']['runner_on_1b'], linescore['status']['runner_on_2b'], linescore['status']['runner_on_3b'],
                 linescore['home_team_stats']['team_runs'], linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors'],
                 linescore['away_team_stats']['team_runs'], linescore['away_team_stats']['team_hits'], linescore['away_team_stats']['team_errors'])
 
