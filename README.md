@@ -82,6 +82,18 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 3-26-18
+  * The bot now changes the date automatically so it doesn't need to be run every day
+  * The HTML from mlb.com is now split by ' ' instead of '\n'.  This is a temporary fix to get the URL I need for the games.  I should still use beautiful soup for this in a future fix
+  * Personnel changes are easier to read because it won't display the linescore
+* 3-8-18
+  * Put all the constants for BaseballConsumer at the top of the file
+  * Changed MikeTroutisms to PlayerQuips
+  * Removed player nicknames (will put this in again player weekend)
+  * Fixed the newly broken runnerOnBaseStatus by adding the new runnerOnBase attributes
+  * Adding an opponents strike tracker now
+  * Added more baseStatusChanging events
+  * Added more game statuses 
 * 8-26-17
   * Turned emotes into constants to make it easier to change them
   * Use player nicknames for players weekend
@@ -126,6 +138,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * ~~MLB.com changed how they use `runner_on_base_status` in the linescore.  Before it used to be a number 0-7 that said whether there were men on the bases, where 1 meant man on first, 3 meant man on third, 4 meant men on first and second, and 7 mean bases loaded.  Now there are attributes `runner_on_1b`, `runner_on_2b`, and `runner_on_3b`, which lists which player_id is on each bag.~~
     * I fixed this by calling tracking runner_on_1b instead of runner_on_base_status
   * The urls are not splitting anymore by '\n'.  I have no clue why, but it's messing with actually finding the URLs of the game, and splitting by a single space (' ') doesn't seem to be working.  
+    * I should use beautiful soup to parse out the HTML
 * 8-26-17
   * If a game event happens but there is no RBI, bot does not post an emoji about a run scored.  An example of this is if a wild pitch scores a runner.  The gameEvents JSON has "score: T", and I should try to find a way to use that to post when there are runs scored, not just when there are RBIs
 * 5-8-17
@@ -140,4 +153,5 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * ~~Fix race conditions~~
   * 5-8-17 - Completed
 * Leverage Mike Trout revision to be able to post uniquely for every player. (i.e. post Thor's hammer whenever Syndergaard gets a hit)
-* Allow the bot to change over the date itself so that you can leave it running instead of needing to restart it every day
+* ~~Allow the bot to change over the date itself so that you can leave it running instead of needing to restart it every day~~
+  * 3-26-18 - Completed
