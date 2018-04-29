@@ -22,6 +22,7 @@ import logging
 import aiohttp
 import discord
 import random
+import bs4
 
 GAME_THREAD_LOG = r'<Path to game_thread.now>'
 SETTINGS_FILE = '../settings.json'
@@ -58,9 +59,9 @@ COMPLETEDEARLY_TITLE = 'Game Completed Early'
 COMPLETEDEARLY_DESCRIPTION = 'Magic 8 ball, will this game resume sometime tonight?'
 COMPLETEDEARLY_BODY = '8-ball: "No chance in hell!"'
 
-GAMEENDED_WIN_TITLE = 'Put it in the books!'  ## 'Put it in the books!'
+GAMEENDED_WIN_TITLE = 'Put it in the books!'
 GAMEENDED_WIN_BODY = 'https://www.youtube.com/watch?v=mmwic9kFx2c' ## (TCB) 'https://www.youtube.com/watch?v=mmwic9kFx2c'
-GAMEENDED_LOSS_TITLE = 'Mets defeated'  ## 'Mets defeated'
+GAMEENDED_LOSS_TITLE = 'Mets defeated'
 GAMEENDED_LOSS_BODY = 'We will get \'em next time' # new york new york  ## (dolphin) ''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
 
 class BaseballUpdaterBot:
@@ -319,6 +320,10 @@ class BaseballUpdaterBot:
                 ("%m") + "/day_" + todaysGame.strftime("%d")
 
             while not response:
+                # If need this here so bot doesn't get stuck on off days
+                if todaysGame.day is not (datetime.now() - timedelta(hours=5)).day:
+                    break
+
                 print("[{}] Searching for day's URL...".format(self.getTime()))
                 try:
                     # If it returns a 404, try again
@@ -328,14 +333,13 @@ class BaseballUpdaterBot:
                                 print("[{}] Found day's URL: {}".format(self.getTime(), url))
                                 response = await resp.text()
 
-                                html = response.split(' ')
+                                soup = bs4.BeautifulSoup(response, 'html.parser')
 
                                 # Get the gid directory based on team code (NYM is nyn)
-                                for v in html:
-                                    if self.TEAM_CODE in v:
-                                        v = v[v.index("\"") + 1:len(v)]
-                                        v = v[0:v.index("\"")]
-                                        directories.append(url + "/" + v[7:])
+                                for listitem in soup.find_all('li'):
+                                    possibleGameId = listitem.get_text().strip()
+                                    if (self.TEAM_CODE+'mlb') in possibleGameId:
+                                        directories.append(url + "/" + possibleGameId)
                                         print("[{}] Found game directory for team {}: {}".format(self.getTime(),
                                                                                                  self.TEAM_CODE,
                                                                                                  directories))
