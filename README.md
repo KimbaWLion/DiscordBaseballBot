@@ -22,7 +22,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 2. Edit settings.json to have the tokens/ids/team codes you desire (Lookup the TEAM_ABBREV and TEAM_CODE values for your preferred team in the table below)
 3. Create a blank file BaseballConsumer/logs/game_thread.now
 4. in BaseballConsumer/BaseballConsumer.py, change line 27 to the path of the game_thread.now file.  (i.e. 'C:\Users...\game_thread.now')
-5. Make sure to download discord.py, aiohttp.py, asyncio.py packages
+5. Make sure to download discord.py, aiohttp.py, asyncio.py, bs4 packages
 6. Make sure you are running a python interpretter version 3.5+.  If you're not, [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).  (If you are running on a mac and python 3.6+, you need to install the certificates.  Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
 7. run MainEntryBot.py the day of the game
 8. When game is finished, wait until the next day and run MainEntryBot.py again
@@ -82,6 +82,10 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 4-28-18
+  * We now use BeautifulSoup to parse the HTML, fixing an html parsing bug
+  * Fixed the infinite loop on offdays bug, allowing the bot to continue posting through a long period of time
+  * Fixed the bug for only certain teams where the bot would fail due to other directories containing the team's TEAM_CODE
 * 3-26-18
   * The bot now changes the date automatically so it doesn't need to be run every day
   * The HTML from mlb.com is now split by ' ' instead of '\n'.  This is a temporary fix to get the URL I need for the games.  I should still use beautiful soup for this in a future fix
@@ -134,11 +138,19 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
 
 # Buglog
+* 4-28-18
+  * ~~Infinite loop on offdays.  The bot doesn't search for new URLs after offdays, making the bot get stuck in an infinite loop and not search for the next days' games.~~
+    * 4-28-18 - fixed, added a break out based on the current date
+  * ~~TEAM_CODE exists in more than one directory on the index page.  'pit' (TEAM_CODE for pittsburgh) exists int he directory 'pitchers', breaking the bot.~~
+    * 4-28-18 - fixed, now the bot searches for TEAM_CODE+'mlb', not just the TEAM_CODE, fixing this issue
+  * ~~After the 3rd out of an inning, the bot lags behind for the rest of the game.~~
+    * 4-28-18 - The global linescore status was not being initialized correctly at the end of an inning because of the new runnerOnBaseStatus fields that I added.  I added in more initializations and now it works fine :)
 * 3-8-18
   * ~~MLB.com changed how they use `runner_on_base_status` in the linescore.  Before it used to be a number 0-7 that said whether there were men on the bases, where 1 meant man on first, 3 meant man on third, 4 meant men on first and second, and 7 mean bases loaded.  Now there are attributes `runner_on_1b`, `runner_on_2b`, and `runner_on_3b`, which lists which player_id is on each bag.~~
     * I fixed this by calling tracking runner_on_1b instead of runner_on_base_status
-  * The urls are not splitting anymore by '\n'.  I have no clue why, but it's messing with actually finding the URLs of the game, and splitting by a single space (' ') doesn't seem to be working.  
-    * I should use beautiful soup to parse out the HTML
+  * ~~The urls are not splitting anymore by '\n'.  I have no clue why, but it's messing with actually finding the URLs of the game, and splitting by a single space (' ') doesn't seem to be working.~~  
+    * ~~I should use beautiful soup to parse out the HTML~~
+    * 4-28-18 - I used BeautifulSoup to parse it out and it works :)
 * 8-26-17
   * If a game event happens but there is no RBI, bot does not post an emoji about a run scored.  An example of this is if a wild pitch scores a runner.  The gameEvents JSON has "score: T", and I should try to find a way to use that to post when there are runs scored, not just when there are RBIs
 * 5-8-17
@@ -155,3 +167,6 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * Leverage Mike Trout revision to be able to post uniquely for every player. (i.e. post Thor's hammer whenever Syndergaard gets a hit)
 * ~~Allow the bot to change over the date itself so that you can leave it running instead of needing to restart it every day~~
   * 3-26-18 - Completed
+* Add in emoji for Stolen bases
+* Add in shruggy emoji for runs scored but not an RBI for favorite team
+* Add in no-hitter/perfect game celebrations
