@@ -35,6 +35,7 @@ EMOTE_GRAND_SLAM = "<:salami:345303176636792832>"
 EMOTE_OTHER_TEAM_RBI = ":("
 EMOTE_OTHER_TEAM_STRIKEOUT = "K"
 EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING = "ꓘ"
+EMOTE_STOLEN_BASE = "<:stolen:432072292013572097>"
 
 # Game Status Constants
 WARMUP_TITLE = 'Game\'s about to start, everyone get in here!'
@@ -42,8 +43,8 @@ WARMUP_DESCRIPTION = "Welcome to Spring training!" # Meet the Mets, meet the Met
 WARMUP_BODY_ALTERNATIVE = "https://www.youtube.com/watch?v=6GsCmnZnllk" # MTM https://www.youtube.com/watch?v=6GsCmnZnllk
 
 GAMESTARTED_TITLE = 'Play ball!'
-GAMESTARTED_DESCRIPTION = 'I\'m back... back again...'
-GAMESTARTED_BODY = "This bot is still a work in progress, please let me know if anything seems wrong (like runners on the bases)."
+GAMESTARTED_DESCRIPTION = 'Cespedes and monster dongs, name a better mashup.'
+GAMESTARTED_BODY = "Let's go Mets!"
 
 RAINDELAY_TITLE = 'Rain Delay'
 RAINDELAY_DESCRIPTION = 'Rain delay stats?'
@@ -51,16 +52,16 @@ RAINDELAY_BODY = 'Rain rain, go away.  Come on back another day.'
 
 POSTPONED_TITLE = 'Game Postponed'
 POSTPONED_DESCRIPTION = "Game's over, makeup to be played later"
-POSTPONED_BODY = '<Game postponed body>'
+POSTPONED_BODY = ':('
 
 COMPLETEDEARLY_TITLE = 'Game Completed Early'
 COMPLETEDEARLY_DESCRIPTION = 'Magic 8 ball, will this game resume sometime tonight?'
 COMPLETEDEARLY_BODY = '8-ball: "No chance in hell!"'
 
-GAMEENDED_WIN_TITLE = 'Put it in the books!'
-GAMEENDED_WIN_BODY = 'https://www.youtube.com/watch?v=mmwic9kFx2c' ## (TCB)
-GAMEENDED_LOSS_TITLE = 'Mets defeated'
-GAMEENDED_LOSS_BODY = '*shrug* it\'s only Spring Training' ## (dolphin) ''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
+GAMEENDED_WIN_TITLE = 'Put it in the books!'  ## 'Put it in the books!'
+GAMEENDED_WIN_BODY = 'https://www.youtube.com/watch?v=mmwic9kFx2c' ## (TCB) 'https://www.youtube.com/watch?v=mmwic9kFx2c'
+GAMEENDED_LOSS_TITLE = 'Mets defeated'  ## 'Mets defeated'
+GAMEENDED_LOSS_BODY = 'We will get \'em next time' # new york new york  ## (dolphin) ''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
 
 class BaseballUpdaterBot:
 
@@ -273,6 +274,7 @@ class BaseballUpdaterBot:
         if 'Defensive Sub' in gameEvent['event']: isPlayerChange = True
         if 'Defensive Switch' in gameEvent['event']: isPlayerChange = True
         if 'Offensive Sub' in gameEvent['event']: isPlayerChange = True
+        if 'Game Advisory' in gameEvent['event']: isPlayerChange = True
         return isPlayerChange
 
     async def run(self, client, channel):
@@ -290,7 +292,7 @@ class BaseballUpdaterBot:
 
         # initialize the globalLinescoreStatus variable
         global globalLinescoreStatus
-        globalLinescoreStatus = ("0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0")
+        globalLinescoreStatus = ("0", "0", False, False, False, "0", "0", "0", "0", "0", "0")
         # initialize favTeamKTrackerTuple variable: string, swinging Ks, looking Ks
         global favTeamKTrackerTuple
         favTeamKTrackerTuple = ("", 0, 0)
@@ -309,6 +311,7 @@ class BaseballUpdaterBot:
                 otherTeamKTrackerTuple = ("", 0, 0)
                 response = None
                 directories = []
+                globalLinescoreStatus = ("0", "0", False, False, False, "0", "0", "0", "0", "0", "0")
                 print("[{}] New Day".format(self.getTime()))
 
             url = "http://gd2.mlb.com/components/game/mlb/"
@@ -386,7 +389,7 @@ class BaseballUpdaterBot:
                     idsOfPrevEvents = self.getEventIdsFromLog()
             except Exception as ex:
                 logging.exception("Exception occured")
-                await client.send_message(channel, "Bot encountered an error.  Was there a review on the field?")
+                #await client.send_message(channel, "Bot encountered an error.  Was there a review on the field?")
 
             time.sleep(10)
 
@@ -437,7 +440,8 @@ class BaseballUpdaterBot:
         global globalLinescoreStatus
         if globalLinescoreStatus[0] == "3": # Make sure to reset outs to 0 if outs = 3 (NOTE: will be out of sync from file's current linescore status)
             globalLinescoreStatus = ("0", globalLinescoreStatus[1], globalLinescoreStatus[2], globalLinescoreStatus[3],
-                                     globalLinescoreStatus[4], globalLinescoreStatus[5], globalLinescoreStatus[6], globalLinescoreStatus[7])
+                                     globalLinescoreStatus[4], globalLinescoreStatus[5], globalLinescoreStatus[6], globalLinescoreStatus[7],
+                                     globalLinescoreStatus[8], globalLinescoreStatus[9], globalLinescoreStatus[10])
 
     def checkGameStatus(self, linescore, idsOfPrevEvents): #rain delay?
         id = linescore['status']['game_status_id']
