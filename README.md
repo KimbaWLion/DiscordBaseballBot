@@ -1,10 +1,14 @@
 # DiscordBaseballBot
 Posts baseball game updates to a discord channel
 
-![Image of game updates](http://i.imgur.com/xLfqaUW.png)
+![Image of game updates](https://i.imgur.com/or2syfZ.png)
 
 Image of game updates with K-tracker
 ![Image of strikeout updates with flair](http://i.imgur.com/uXE0i5d.png)
+
+Image of RBI emoji and end of the game
+![Image of RBI emoji and end of the game](https://i.imgur.com/1asf2Gg.png)
+
 
 This is a working project to create a baseball updater bot to post game updates in a Discord channel.
 This will rely heavily from the [reddit baseball updater bot](https://github.com/mattabullock/Baseball-GDT-Bot)
@@ -173,3 +177,4 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * Do not show the linescore or onBaseStatus when the bot lags behinds and is catching up (since they are 100% out of sync)
 * Add emoji or bot comment for ejections
 * Add delayed start as a game status
+* When catching up from previous innings, do not show linescore/onBaseStatus
