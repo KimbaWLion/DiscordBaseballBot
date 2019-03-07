@@ -24,8 +24,7 @@ import discord
 import random
 import bs4
 
-GAME_THREAD_LOG = r'<Path to game_thread.now>'
-SETTINGS_FILE = '../settings.json'
+SETTINGS_FILE = './settings.json'
 
 # Emotes
 EMOTE_STRIKEOUT = "<:strikeout:345303176704032770>"
@@ -40,11 +39,11 @@ EMOTE_STOLEN_BASE = "<:stolen:432072292013572097>"
 
 # Game Status Constants
 WARMUP_TITLE = 'Game\'s about to start, everyone get in here!'
-WARMUP_DESCRIPTION = "Welcome to Spring training!" # Meet the Mets, meet the Mets.  Step right up and greet the Mets...
+WARMUP_DESCRIPTION = "Let's go win this one!" # Meet the Mets, meet the Mets.  Step right up and greet the Mets...
 WARMUP_BODY_ALTERNATIVE = "https://www.youtube.com/watch?v=6GsCmnZnllk" # MTM https://www.youtube.com/watch?v=6GsCmnZnllk
 
 GAMESTARTED_TITLE = 'Play ball!'
-GAMESTARTED_DESCRIPTION = 'Cespedes and monster dongs, name a better mashup.'
+GAMESTARTED_DESCRIPTION = 'HYPE HYPE HYPE HYPE HYPE HYPE HYPE'
 GAMESTARTED_BODY = "Let's go Mets!"
 
 RAINDELAY_TITLE = 'Rain Delay'
@@ -53,7 +52,7 @@ RAINDELAY_BODY = 'Rain rain, go away.  Come on back another day.'
 
 POSTPONED_TITLE = 'Game Postponed'
 POSTPONED_DESCRIPTION = "Game's over, makeup to be played later"
-POSTPONED_BODY = ':('
+POSTPONED_BODY = 'On the bright side, we didn\'t lose'
 
 COMPLETEDEARLY_TITLE = 'Game Completed Early'
 COMPLETEDEARLY_DESCRIPTION = 'Magic 8 ball, will this game resume sometime tonight?'
@@ -88,6 +87,9 @@ class BaseballUpdaterBot:
 
             self.DISCORD_GAME_THREAD_CHANNEL_ID = settings.get('DISCORD_GAME_THREAD_CHANNEL_ID')
             if self.DISCORD_GAME_THREAD_CHANNEL_ID == None: return "Missing DISCORD_GAME_THREAD_CHANNEL_ID"
+
+            self.GAME_THREAD_LOG = settings.get('GAME_THREAD_LOG')
+            if self.GAME_THREAD_LOG == None: return "Missing GAME_THREAD_LOG"
 
             self.BOT_TIME_ZONE = settings.get('BOT_TIME_ZONE')
             if self.BOT_TIME_ZONE == None: return "Missing BOT_TIME_ZONE"
@@ -247,7 +249,7 @@ class BaseballUpdaterBot:
 
     def getEventIdsFromLog(self):
         idsFromLog = []
-        with open(GAME_THREAD_LOG) as log:
+        with open(self.GAME_THREAD_LOG) as log:
             for line in log:
                 splitLine = line.split(" ")
                 id = splitLine[2][1:-1]
@@ -256,14 +258,14 @@ class BaseballUpdaterBot:
         return idsFromLog
 
     def printToLog(self, atbat, linescore):
-        with open(GAME_THREAD_LOG, "a") as log:
+        with open(self.GAME_THREAD_LOG, "a") as log:
             id = atbat['id'] if atbat['id'] is not None else "NoIdInJSONFile"
             log.write("[{}] [{}] | {}\n".format(self.getTime(), id, self.formatAtBatLineForLog(atbat)))
         log.close()
         print("[{}] New atBat: {} {}".format(self.getTime(), self.formatAtBatLineForLog(atbat), self.getLinescoreStatus(linescore)))
 
     def printGameStatusToLog(self, id, gameStatus):
-        with open(GAME_THREAD_LOG, "a") as log:
+        with open(self.GAME_THREAD_LOG, "a") as log:
             log.write("[{}] [{}] | Game Status: {}\n".format(self.getTime(), id, gameStatus))
         log.close()
         print("[{}] Game Status: {}".format(self.getTime(), gameStatus))
