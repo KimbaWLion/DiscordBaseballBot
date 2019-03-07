@@ -16,7 +16,7 @@ Please contact us on Reddit or Github if you have any questions.
 from datetime import datetime, timedelta
 from game_events_parser import GameEventsParser
 from linescore_parser import LinescoreParser
-import time
+import asyncio
 import json
 import logging
 import aiohttp
@@ -61,8 +61,10 @@ COMPLETEDEARLY_BODY = '8-ball: "No chance in hell!"'
 
 GAMEENDED_WIN_TITLE = 'Put it in the books!'
 GAMEENDED_WIN_BODY = 'https://www.youtube.com/watch?v=mmwic9kFx2c' ## (TCB) 'https://www.youtube.com/watch?v=mmwic9kFx2c'
-GAMEENDED_LOSS_TITLE = 'Mets defeated'
-GAMEENDED_LOSS_BODY = 'We will get \'em next time' # new york new york  ## (dolphin) ''https://puu.sh/wd9ZQ/c70f4179f5.jpg')
+GAMEENDED_LOSS_TITLE = 'Mets defeated' # Mets defeated
+GAMEENDED_LOSS_BODY = 'https://cdn.discordapp.com/attachments/411210054591578122/465340387037544448/killme.png' # We will get \'em next time  ## (dolphin) 'https://cdn.discordapp.com/attachments/411210054591578122/465340387037544448/killme.png')
+
+SEVENTH_INNING_STRETCH = 'SEVENTH INNING STRETCH TIME!\nhttps://youtu.be/Tg3C0nvenro' # (Lazy Mary) https://youtu.be/Tg3C0nvenro
 
 class BaseballUpdaterBot:
 
@@ -188,7 +190,11 @@ class BaseballUpdaterBot:
         raise Exception("gameEvent not recognized")
 
     def endOfInning(self, gameEvent):
-        if gameEvent['outs'] is "3": return "```------ End of {} ------```".format(self.formatInning(gameEvent))
+        if gameEvent['outs'] == "3":
+            endOfInningString = "```------ End of {} ------```".format(self.formatInning(gameEvent))
+            if gameEvent['inning'] == "7" and gameEvent['topOrBot'] == "TOP":
+                endOfInningString = "{}\n{}".format(endOfInningString, SEVENTH_INNING_STRETCH)
+            return endOfInningString
         return ""
 
     def playerismsAndEmoji(self, gameEvent, linescore):
@@ -345,7 +351,7 @@ class BaseballUpdaterBot:
                                                                                                  directories))
                 except:
                     print("[{}] Couldn't find URL \"{}\", trying again...".format(self.getTime(), url))
-                    time.sleep(20)
+                    await asyncio.sleep(20)
 
             try:
                 for d in directories:
@@ -395,7 +401,7 @@ class BaseballUpdaterBot:
                 logging.exception("Exception occured")
                 #await client.send_message(channel, "Bot encountered an error.  Was there a review on the field?")
 
-            time.sleep(10)
+            await asyncio.sleep(10)
 
         print("/*------------- End of Bot.run() -------------*/")
 

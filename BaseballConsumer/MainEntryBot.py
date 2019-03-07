@@ -6,14 +6,12 @@ Main entry point for the bot.
 This module performs the start-up, login and reads out the settings to configure
 the bot.
 """
-import sys
 import discord
-import logging
 from BaseballConsumer import BaseballUpdaterBot
 import json
 
 
-SETTINGS_FILE = '../settings.json'
+SETTINGS_FILE = './settings.json'
 
 client = discord.Client()
 # logging.basicConfig(level=logging.DEBUG)

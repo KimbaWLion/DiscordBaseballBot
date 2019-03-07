@@ -12,8 +12,6 @@ import sys
 import json
 import time
 import aiohttp
-import asyncio
-
 
 class GameEventsParser:
     def __init__(self):

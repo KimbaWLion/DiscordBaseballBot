@@ -7,13 +7,8 @@ Please contact us on Reddit or Github if you have any questions.
 
 '''
 
-# from urllib.request import urlopen
 import sys
-import json
-import time
 import aiohttp
-import asyncio
-
 
 class LinescoreParser:
     def __init__(self):
