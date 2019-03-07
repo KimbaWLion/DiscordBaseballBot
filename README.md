@@ -86,6 +86,8 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 3-6-19
+  * Bot now calls mlb.com asynchonously
 * 4-28-18
   * We now use BeautifulSoup to parse the HTML, fixing an html parsing bug
   * Fixed the infinite loop on offdays bug, allowing the bot to continue posting through a long period of time
@@ -178,3 +180,4 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * Add emoji or bot comment for ejections
 * Add delayed start as a game status
 * When catching up from previous innings, do not show linescore/onBaseStatus
+* Fix the debugger to be more descriptive
