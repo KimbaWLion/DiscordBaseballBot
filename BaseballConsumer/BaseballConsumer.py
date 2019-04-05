@@ -30,9 +30,13 @@ SETTINGS_FILE = './settings.json'
 EMOTE_STRIKEOUT = "<:strikeout:345303176704032770>"
 EMOTE_STRIKEOUT_LOOKING = "<:strikeout2:345303176792113152>"
 EMOTE_RBI = "<:ribbies:345468637617848321>"
+EMOTE_EARNED_RUN = "<:nymLogo:419221359357460480>"
+EMOTE_UNEARNED_RUN: "¯\_(ツ)_/¯"
 EMOTE_HOMERUN = "<:ITSOUTTAHERE:345303176955822080>"
 EMOTE_GRAND_SLAM = "<:salami:345303176636792832>"
 EMOTE_OTHER_TEAM_RBI = ":("
+EMOTE_OTHER_TEAM_EARNED_RUN = "<:tired_face:562192847575580692>"
+EMOTE_OTHER_TEAM_UNEARNED_RUN = "<:rage:562189976343805963>"
 EMOTE_OTHER_TEAM_STRIKEOUT = "K"
 EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING = "ꓘ"
 EMOTE_STOLEN_BASE = "<:stolen:432072292013572097>"
@@ -204,11 +208,12 @@ class BaseballUpdaterBot:
         event = gameEvent['event']
         if self.favoriteTeamIsBatting(gameEvent, linescore):
             # Favorite team batting
-            if "Home Run" in event and gameEvent['rbi'] != "4": playerism = ''.join([playerism, EMOTE_HOMERUN, "\n"])
-            if "Home Run" in event and gameEvent['rbi'] == "4": playerism = ''.join([playerism, EMOTE_GRAND_SLAM, "\n"])
-            if gameEvent['rbi'] is not None:
-                for i in range(int(gameEvent['rbi'])):
-                    playerism = ''.join([playerism, EMOTE_RBI, " "])
+            if "Home Run" in event and len(gameEvent['rbi']) != "4": playerism = ''.join([playerism, EMOTE_HOMERUN, "\n"])
+            if "Home Run" in event and len(gameEvent['rbi']) == "4": playerism = ''.join([playerism, EMOTE_GRAND_SLAM, "\n"])
+            for RBIMap in gameEvent['rbi']:
+                if RBIMap['rbi']: playerism = ''.join([playerism, EMOTE_RBI, " "])
+                elif RBIMap['score'] and RBIMap['earned']:  playerism = ''.join([playerism, EMOTE_EARNED_RUN, " "])
+                elif RBIMap['score'] and not RBIMap['earned']:  playerism = ''.join([playerism, EMOTE_UNEARNED_RUN, " "])
             if "Strikeout" in event:
                 global otherTeamKTrackerTuple
                 if "strikes out" in gameEvent['description']:
@@ -235,9 +240,10 @@ class BaseballUpdaterBot:
                     playerism = "".join(["Strikeout tracker: ", favTeamKTrackerTuple[0]])
 
             # Opponents batting
-            if gameEvent['rbi'] is not None:
-                for i in range(int(gameEvent['rbi'])):
-                    playerism = ''.join([playerism, EMOTE_OTHER_TEAM_RBI, " "])
+            for RBIMap in gameEvent['rbi']:
+                if RBIMap['score'] and not RBIMap['earned']:  playerism = ''.join([playerism, EMOTE_OTHER_TEAM_UNEARNED_RUN, " "])
+                elif RBIMap['rbi']: playerism = ''.join([playerism, EMOTE_OTHER_TEAM_RBI, " "])
+                elif RBIMap['score'] and RBIMap['earned']:  playerism = ''.join([playerism, EMOTE_OTHER_TEAM_EARNED_RUN, " "])
 
         playerism = ''.join([playerism, "\n"])
         if self.hasPlayerQuip(gameEvent):
@@ -301,7 +307,10 @@ class BaseballUpdaterBot:
 
         # initialize the globalLinescoreStatus variable
         global globalLinescoreStatus
-        globalLinescoreStatus = ("0", "0", False, False, False, "0", "0", "0", "0", "0", "0")
+        newGameLinescoreStatus = {'outs':"0", 'runnerOnBaseStatus':"0", 'runner_on_1b':False, 'runner_on_2b':False, 'runner_on_3b':False,
+                                 'home_team_runs':"0", 'home_team_hits':"0", 'home_team_errors':"0",
+                                 'away_team_runs':"0", 'away_team_hits':"0", 'away_team_errors':"0"}
+        globalLinescoreStatus = newGameLinescoreStatus
         # initialize favTeamKTrackerTuple variable: string, swinging Ks, looking Ks
         global favTeamKTrackerTuple
         favTeamKTrackerTuple = ("", 0, 0)
@@ -314,13 +323,14 @@ class BaseballUpdaterBot:
         todaysGame = datetime.now() - timedelta(hours=5)
 
         while True:
+            # If it's a new day, start a new game!
             if todaysGame.day is not (datetime.now()-timedelta(hours=5)).day:
                 todaysGame = datetime.now() - timedelta(hours=5)
                 favTeamKTrackerTuple = ("", 0, 0)
                 otherTeamKTrackerTuple = ("", 0, 0)
                 response = None
                 directories = []
-                globalLinescoreStatus = ("0", "0", False, False, False, "0", "0", "0", "0", "0", "0")
+                globalLinescoreStatus = newGameLinescoreStatus
                 print("[{}] New Day".format(self.getTime()))
 
             url = "http://gd2.mlb.com/components/game/mlb/"
@@ -386,9 +396,9 @@ class BaseballUpdaterBot:
                             if not self.linescoreAndGameEventsInSync(linescore, gameEvent):
                                 break
                             self.updateGlobalLinescoreStatus(linescore)
-                            self.resetOutsGlobalLinescoreStatus()
                             self.printToLog(gameEvent, linescore)
                             await client.send_message(channel, self.commentOnDiscord(gameEvent, linescore))
+                            self.resetOutsGlobalLinescoreStatus()
                             idsOfPrevEvents = self.getEventIdsFromLog()
 
                     # Check if game status changed
@@ -438,10 +448,10 @@ class BaseballUpdaterBot:
 
     def getLinescoreStatus(self, linescore):
         # Outs, Base status, runner on 1b, runner on 2b, runner on 3b, Home runs, Home hits, Home errors, Away run, Away hits, Away errors
-        return (linescore['status']['outs'], linescore['status']['runnerOnBaseStatus'],
-                linescore['status']['runner_on_1b'], linescore['status']['runner_on_2b'], linescore['status']['runner_on_3b'],
-                linescore['home_team_stats']['team_runs'], linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors'],
-                linescore['away_team_stats']['team_runs'], linescore['away_team_stats']['team_hits'], linescore['away_team_stats']['team_errors'])
+        return {'outs':linescore['status']['outs'], 'runnerOnBaseStatus':linescore['status']['runnerOnBaseStatus'],
+                'runner_on_1b':linescore['status']['runner_on_1b'], 'runner_on_2b':linescore['status']['runner_on_2b'], 'runner_on_3b':linescore['status']['runner_on_3b'],
+                'home_team_runs':linescore['home_team_stats']['team_runs'], 'home_team_hits':linescore['home_team_stats']['team_hits'], 'home_team_errors':linescore['home_team_stats']['team_errors'],
+                'away_team_runs':linescore['away_team_stats']['team_runs'], 'away_team_hits':linescore['away_team_stats']['team_hits'], 'away_team_errors':linescore['away_team_stats']['team_errors']}
 
     def updateGlobalLinescoreStatus(self, linescore):
         newLinescoreStatus = self.getLinescoreStatus(linescore)
@@ -450,10 +460,8 @@ class BaseballUpdaterBot:
 
     def resetOutsGlobalLinescoreStatus(self):
         global globalLinescoreStatus
-        if globalLinescoreStatus[0] == "3": # Make sure to reset outs to 0 if outs = 3 (NOTE: will be out of sync from file's current linescore status)
-            globalLinescoreStatus = ("0", globalLinescoreStatus[1], globalLinescoreStatus[2], globalLinescoreStatus[3],
-                                     globalLinescoreStatus[4], globalLinescoreStatus[5], globalLinescoreStatus[6], globalLinescoreStatus[7],
-                                     globalLinescoreStatus[8], globalLinescoreStatus[9], globalLinescoreStatus[10])
+        if globalLinescoreStatus['outs'] == "3": # Make sure to reset outs to 0 if outs = 3 (NOTE: will be out of sync from file's current linescore status)
+            globalLinescoreStatus['outs'] = "0"
 
     def checkGameStatus(self, linescore, idsOfPrevEvents): #rain delay?
         id = linescore['status']['game_status_id']

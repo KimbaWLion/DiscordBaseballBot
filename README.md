@@ -86,6 +86,10 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 4-4-19
+  * Unearned runs now have their own emoji if there are no RBIs during the play
+  * Turned globalLinescoreStatus into a dictionary
+  * Fixed a couple of errors that sometimes crash the bot
 * 3-6-19
   * Bot now calls mlb.com asynchonously
 * 4-28-18
@@ -158,7 +162,8 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
     * ~~I should use beautiful soup to parse out the HTML~~
     * 4-28-18 - I used BeautifulSoup to parse it out and it works :)
 * 8-26-17
-  * If a game event happens but there is no RBI, bot does not post an emoji about a run scored.  An example of this is if a wild pitch scores a runner.  The gameEvents JSON has "score: T", and I should try to find a way to use that to post when there are runs scored, not just when there are RBIs
+  * ~~If a game event happens but there is no RBI, bot does not post an emoji about a run scored.  An example of this is if a wild pitch scores a runner.  The gameEvents JSON has "score: T", and I should try to find a way to use that to post when there are runs scored, not just when there are RBIs~~
+    * 4-04-19 - fixed, now there are new emoji's for non-RBI runs
 * 5-8-17
   * ~~There are race conditions when there game actions (not atbats).  In order to make sure the linescore was accurate, I do not have the bot post the next atbat until the currentBatterId in both linescore.json and game_events.json match.  However, if there is a game event, it doesn't mention currentBatterId and as such posts immediately.  So sometimes there is "Coaching visit to the mound" followed by "grand slam" rather than the other way around. Another race condition, if there is a stolen base, it the linescore often does not reflect the stolen base in update.~~  
     * ~~5-8-17 - This should be fixed now with the globalLinescoreStatus update~~
@@ -174,7 +179,8 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * ~~Allow the bot to change over the date itself so that you can leave it running instead of needing to restart it every day~~
   * 3-26-18 - Completed
 * Add in emoji for Stolen bases
-* Add in shruggy emoji for runs scored but not an RBI for favorite team
+* ~~Add in shruggy emoji for runs scored but not an RBI for favorite team~~
+  * 4-04-19 - Completed
 * Add in no-hitter/perfect game celebrations
 * Do not show the linescore or onBaseStatus when the bot lags behinds and is catching up (since they are 100% out of sync)
 * Add emoji or bot comment for ejections

@@ -12,6 +12,8 @@ import sys
 import json
 import time
 import aiohttp
+from datetime import datetime, timedelta
+
 
 class GameEventsParser:
     def __init__(self):
@@ -61,9 +63,11 @@ class GameEventsParser:
 
     def getHalfInningAtBats(self, inning, topOrBottom):
         atbats = []
-        if type(inning) is str: return atbats
-        atbats = inning.get(topOrBottom).get('atbat')
-        if atbats is None: atbats = [] # If no at bats, return empty list to make sure the loop doesn't fail
+        if type(inning) is str or inning is None: return [] # If no at bats, return empty list to make sure the loop doesn't fail
+        topOrBottomInning = inning.get(topOrBottom)
+        if topOrBottomInning is None: return [] # If no at bats, return empty list to make sure the loop doesn't fail
+        atbats = topOrBottomInning.get('atbat')
+        if atbats is None: return [] # If no at bats, return empty list to make sure the loop doesn't fail
         return atbats
 
     def getTopHalfInningAtBats(self, inning):
@@ -74,9 +78,11 @@ class GameEventsParser:
 
     def getHalfInningActions(self, inning, topOrBottom):
         actions = []
-        if type(inning) is str: return actions
-        actions = inning.get(topOrBottom).get('action')
-        if actions is None: actions = []
+        if type(inning) is str or inning is None: return [] # If no actions, return empty list to make sure the loop doesn't fail
+        topOrBottomInning = inning.get(topOrBottom)
+        if topOrBottomInning is None: return [] # If no actions, return empty list to make sure the loop doesn't fail
+        actions = topOrBottomInning.get('action')
+        if actions is None: return [] # If no actions, return empty list to make sure the loop doesn't fail
         if type(actions) is dict: actions = [actions]
         return actions
 
@@ -101,30 +107,53 @@ class GameEventsParser:
         gameEventMap['awayTeamRuns'] = gameEvent.get('away_team_runs')
         gameEventMap['batterId'] = gameEvent.get('batter')
         gameEventMap['event'] = gameEvent.get('event')
-        gameEventMap['id'] = self.getId(gameEvent)
-        gameEventMap['rbi'] = gameEvent.get('rbi')
+        gameEventMap['rbi'] = self.getRBIMaps(gameEvent)
         #gameEventMap['playNumber'] = atbat.get('num')
         #gameEventMap['time'] = atbat.get('start_tfs')
         gameEventMap['inning'] = inningNum
         gameEventMap['topOrBot'] = inningTopOrBot
+
+        guid = ''.join([(datetime.now() - timedelta(hours=6)).strftime("%Y/%m/%d"),';',gameEventMap['outs'],';',gameEventMap['inning'],';',gameEventMap['homeTeamRuns'],';',gameEventMap['awayTeamRuns'],';'])
+        if self.getId(gameEvent) is None:
+            gameEventMap['id'] = ''.join([guid, gameEventMap['description'].replace(" ", "")])
+        else:
+            gameEventMap['id'] = ''.join([guid, self.getId(gameEvent)])
+
         return gameEventMap
 
     def getId(self, gameEvent):
         id = gameEvent.get('play_guid')
         return id
 
+    def getRBIMaps(self, gameEvent):
+        RBIMaps = []
+        runners = gameEvent.get('runner')
+        if runners is None: return RBIMaps
+        if type(runners) is list:
+            for runner in runners:
+                if runner.get('score') is not None:
+                    RBIMaps.append(self.createRBIMap(runner))
+        else:
+            if runners.get('score') is not None:
+                RBIMaps.append(self.createRBIMap(runners))
+        return RBIMaps
+
+
+    def createRBIMap(self, runner):
+        RBIMap = {}
+        RBIMap['score'] = True
+        RBIMap['earned'] = True if runner.get('earned') is not None else False
+        RBIMap['rbi'] = True if runner.get('rbi') is not None else False
+        return RBIMap
+
     def getAtBatMap(self, atbat, inningNum, inningTopOrBot):
         atbatMap = self.getGameEventsMap(atbat, inningNum, inningTopOrBot)
-        #atbatMap['playNumber'] = atbat.get('num')
-        #atbatMap['time'] = atbat.get('start_tfs')
-        if atbatMap['id'] is None: atbatMap['id'] = ''.join(["NoIdInJSONFile", atbat.get('start_tfs_zulu')])
+        todaysForId = datetime.now() - timedelta(hours=6)
         atbatMap['gameEvent'] = 'atbat'
         return atbatMap
 
     def getActionsMap(self, action, inningNum, inningTopOrBot):
         actionMap = self.getGameEventsMap(action, inningNum, inningTopOrBot)
-        if actionMap['id'] is None: actionMap['id'] = ''.join(["NoIdInJSONFile",action.get('tfs_zulu'),actionMap['description'].replace(" ","")])
-        #if actionMap['batterId'] is None: actionMap['batterId'] = action.get('player')
         actionMap['gameEvent'] = 'action'
         return actionMap
 
@@ -151,6 +180,7 @@ class GameEventsParser:
 
     def getListOfGameEvents(self,innings):
         gameEventList = []
+        if innings is None: return gameEventList
         if type(innings) is not list:
             topAtBats = self.getTopHalfInningAtBats(innings)
             topActions = self.getTopHalfInningActions(innings)
