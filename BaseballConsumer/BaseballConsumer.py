@@ -137,7 +137,9 @@ class BaseballUpdaterBot:
                "{}{}\n" \
                "```\n" \
                "{}" \
-               "{}".format(self.formatLinescoreForDiscord(gameEvent, linescore),
+               "{}".format(self.formatLinescoreForDiscord(gameEvent, linescore)
+                                          if not self.gameEventInningBeforeCurrentLinescoreInning(linescore, gameEvent)
+                                          else self.formatLinescoreCatchingUpForDiscord(gameEvent, linescore),
                            self.formatPitchCount(gameEvent['gameEvent'], gameEvent['balls'], gameEvent['strikes']),
                            gameEvent['description'],
                            self.playerismsAndEmoji(gameEvent, linescore),
@@ -166,6 +168,15 @@ class BaseballUpdaterBot:
             self.formatOuts(gameEvent['outs']),
             linescore['home_team_name']['team_abbrev'], linescore['home_team_stats']['team_runs'],
             linescore['home_team_stats']['team_hits'], linescore['home_team_stats']['team_errors']
+        )
+
+    def formatLinescoreCatchingUpForDiscord(self, gameEvent, linescore):
+        return "{}\n" \
+               "\n" \
+               "  BOT         CATCHING\n" \
+               " BEHIND          UP\n" \
+               "".format(
+            self.formatInning(gameEvent)
         )
 
     def formatInning(self, gameEvent):
@@ -208,8 +219,8 @@ class BaseballUpdaterBot:
         event = gameEvent['event']
         if self.favoriteTeamIsBatting(gameEvent, linescore):
             # Favorite team batting
-            if "Home Run" in event and len(gameEvent['rbi']) != "4": playerism = ''.join([playerism, EMOTE_HOMERUN, "\n"])
-            if "Home Run" in event and len(gameEvent['rbi']) == "4": playerism = ''.join([playerism, EMOTE_GRAND_SLAM, "\n"])
+            if "Home Run" in event and len(gameEvent['rbi']) == 4: playerism = ''.join([playerism, EMOTE_GRAND_SLAM, "\n"])
+            elif "Home Run" in event and len(gameEvent['rbi']) != 4: playerism = ''.join([playerism, EMOTE_HOMERUN, "\n"])
             for RBIMap in gameEvent['rbi']:
                 if RBIMap['rbi']: playerism = ''.join([playerism, EMOTE_RBI, " "])
                 elif RBIMap['score'] and RBIMap['earned']:  playerism = ''.join([playerism, EMOTE_EARNED_RUN, " "])
@@ -391,7 +402,7 @@ class BaseballUpdaterBot:
 
                     # Check if new game event
                     for gameEvent in listOfGameEvents:
-                        id = (gameEvent['id'] if gameEvent['id'] is not None else "NoIdInJSONFile")
+                        id = gameEvent['id']
                         if id not in idsOfPrevEvents:
                             if not self.linescoreAndGameEventsInSync(linescore, gameEvent):
                                 break
@@ -417,8 +428,11 @@ class BaseballUpdaterBot:
 
         print("/*------------- End of Bot.run() -------------*/")
 
+    def gameEventInningBeforeCurrentLinescoreInning(self, linescore, gameEvent):
+        return True if int(gameEvent['inning']) < int(linescore['status']['currentInning']) else False
+
     def linescoreAndGameEventsInSync(self, linescore, gameEvent):
-        if int(gameEvent['inning']) < int(linescore['status']['currentInning']): # if bot posting is behind, let it catch up
+        if self.gameEventInningBeforeCurrentLinescoreInning(linescore, gameEvent): # if bot posting is behind, let it catch up
             return True
         if self.linescoreStatusHasChanged(linescore):
             return True

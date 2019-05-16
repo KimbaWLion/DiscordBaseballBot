@@ -86,6 +86,11 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
   * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
 
 # Changelog
+* 5-15-19
+  * Bot now states that it is catching up if it is behind in the game
+  * Fixed Grand slam emotes
+  * Code is now more robust so it will not break if there is a null value for any higher level object
+  * Doesn't post if there is no description anymore
 * 4-4-19
   * Unearned runs now have their own emoji if there are no RBIs during the play
   * Turned globalLinescoreStatus into a dictionary
@@ -182,8 +187,11 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * ~~Add in shruggy emoji for runs scored but not an RBI for favorite team~~
   * 4-04-19 - Completed
 * Add in no-hitter/perfect game celebrations
-* Do not show the linescore or onBaseStatus when the bot lags behinds and is catching up (since they are 100% out of sync)
+* ~~Do not show the linescore or onBaseStatus when the bot lags behinds and is catching up (since they are 100% out of sync)~~
+  * 4-04-19 - Completed
 * Add emoji or bot comment for ejections
 * Add delayed start as a game status
-* When catching up from previous innings, do not show linescore/onBaseStatus
+* ~~When catching up from previous innings, do not show linescore/onBaseStatus~~
+  * 4-04-19 - Completed
 * Fix the debugger to be more descriptive
+* If mlb.com services are down, instead of crashing the bot, be able to handle "endpoint request timed out"

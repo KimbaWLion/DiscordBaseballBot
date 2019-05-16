@@ -53,7 +53,12 @@ class GameEventsParser:
                     return await resp.json()
 
     def getInnings(self, json):
-        return json.get('data').get('game').get('inning')
+        data = json.get('data')
+        if data is None: return []
+        game = data.get('game')
+        if game is None: return []
+        innings = game.get('inning')
+        return [] if innings is None else innings
 
     def getCurrentBatter(self, json):
         return json.get('data').get('game').get('atBat').get('pid')
@@ -97,6 +102,10 @@ class GameEventsParser:
             print(atbat.get('des'))
 
     def getGameEventsMap(self, gameEvent, inningNum, inningTopOrBot):
+        # If missing important info do not return anything
+        if gameEvent.get('des') is None or not gameEvent.get('des') : return None
+
+        # If looks good, return the Map
         gameEventMap = {}
         gameEventMap['result'] = gameEvent.get('event')
         gameEventMap['description'] = gameEvent.get('des')
@@ -118,6 +127,7 @@ class GameEventsParser:
             gameEventMap['id'] = ''.join([guid, gameEventMap['description'].replace(" ", "")])
         else:
             gameEventMap['id'] = ''.join([guid, self.getId(gameEvent)])
+            gameEventMap['altId'] = ''.join([guid, gameEventMap['description'].replace(" ", "")])
 
         return gameEventMap
 
@@ -148,23 +158,27 @@ class GameEventsParser:
 
     def getAtBatMap(self, atbat, inningNum, inningTopOrBot):
         atbatMap = self.getGameEventsMap(atbat, inningNum, inningTopOrBot)
-        todaysForId = datetime.now() - timedelta(hours=6)
+        if atbatMap is None: return None
         atbatMap['gameEvent'] = 'atbat'
         return atbatMap
 
     def getActionsMap(self, action, inningNum, inningTopOrBot):
         actionMap = self.getGameEventsMap(action, inningNum, inningTopOrBot)
+        if actionMap is None: return None
         actionMap['gameEvent'] = 'action'
         return actionMap
+
+    def appendIfNotNone(self, list, additionalItem):
+        return list.append(additionalItem) if additionalItem is not None else list
 
     def getAtBats(self, halfInning, inningNum, inningTopOrBot):
         atBatList = []
         try:
             if not isinstance(halfInning, list): # First atbat of the inning is not in a list due to mlb.com bad coding
-                atBatList.append(self.getAtBatMap(halfInning, inningNum, inningTopOrBot))
+                self.appendIfNotNone(atBatList, self.getAtBatMap(halfInning, inningNum, inningTopOrBot))
             else:
                 for atbat in halfInning:
-                    atBatList.append(self.getAtBatMap(atbat, inningNum, inningTopOrBot))
+                    self.appendIfNotNone(atBatList, self.getAtBatMap(atbat, inningNum, inningTopOrBot))
         except AttributeError:
             print("Exception in getAtBats (str has no get attr) --> why is it not a dict?")
             e = sys.exc_info()[0]
@@ -175,7 +189,7 @@ class GameEventsParser:
     def getActions(self, halfInning, inningNum, inningTopOrBot):
         actionsList = []
         for action in halfInning:
-            actionsList.append(self.getActionsMap(action, inningNum, inningTopOrBot))
+            self.appendIfNotNone(actionsList, self.getActionsMap(action, inningNum, inningTopOrBot))
         return actionsList
 
     def getListOfGameEvents(self,innings):
