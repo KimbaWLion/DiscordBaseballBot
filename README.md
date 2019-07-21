@@ -26,7 +26,7 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 2. Edit settings.json to have the tokens/ids/team codes you desire (Lookup the TEAM_ABBREV and TEAM_CODE values for your preferred team in the table below).
 3. Create a blank file BaseballConsumer/logs/game_thread.now
 4. Make sure to download discord.py (v0.16.17), aiohttp.py (v1.0.5), asyncio.py, beautifulsoup4 (v4.6.0) packages
-5. Make sure you are running a python interpretter version 3.5+.  If you're not, [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).  (If you are running on a mac and python 3.6+, you need to install the certificates.  Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
+5. Make sure you are running a python interpretter version 3.6.  If you're running not (3.5- or 3.7+), [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).  (If you are running on a mac and python 3.6, you need to install the certificates.  Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
 6. run MainEntryBot.py the day of the game
 7. When game is finished, wait until the next day and run MainEntryBot.py again
 
