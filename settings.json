@@ -7,7 +7,5 @@
     "BOT_TIME_ZONE": "ET",
     "TEAM_TIME_ZONE": "ET",
     "TEAM_CODE": "nyn",
-    "TEAM_ABBREV": "NYM",
-
-    "GAME_THREAD_NOW": "./logs/game_thread.now"
+    "TEAM_ABBREV": "NYM"
 }
