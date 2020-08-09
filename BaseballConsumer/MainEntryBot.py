@@ -8,6 +8,7 @@ the bot.
 """
 import discord
 from BaseballConsumer import BaseballUpdaterBot
+from BaseballConsumerV2 import BaseballUpdaterBotV2
 import json
 
 
@@ -42,14 +43,16 @@ def read_settings():
     return 0
 
 async def my_background_task():
-    baseballUpdaterBot = BaseballUpdaterBot()
+    baseballUpdaterBotV2 = BaseballUpdaterBotV2()
 
     await client.wait_until_ready()
     counter = 0
-    channel = discord.Object(id=DISCORD_GAME_THREAD_CHANNEL_ID)
-    while not client.is_closed:
-        await baseballUpdaterBot.run(client, channel)
+
+    channel = client.get_channel(int(DISCORD_GAME_THREAD_CHANNEL_ID))
+    while not client.is_closed():
+        await baseballUpdaterBotV2.run(client, channel)
         # sleep exists in run() method
+
 
 @client.event
 async def on_ready():
