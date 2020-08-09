@@ -13,8 +13,10 @@ import statsapi
 from datetime import datetime, timedelta
 import asyncio
 import discord
+import json
 
 METS_TEAM_ID = 121
+SETTINGS_FILE = './settings.json'
 
 # Game Status Constants
 WARMUP_TITLE = 'Game\'s about to start, everyone get in here!'
@@ -35,7 +37,10 @@ SEVENTH_INNING_STRETCH = 'SEVENTH INNING STRETCH TIME!\nhttps://youtu.be/Tg3C0nv
 class BaseballUpdaterBotV2:
 
     async def run(self, client, channel):
-        self.GAME_THREAD_LOG = "game_thread.now"
+        error_msg = self.read_settings()
+        if error_msg != 0:
+            print(error_msg)
+            return
 
         print('in BaseballUpdaterBotV2.run()')
 
@@ -115,6 +120,15 @@ class BaseballUpdaterBotV2:
                     await asyncio.sleep(300)
             await asyncio.sleep(10)
         print("/*------------- End of Bot.run() -------------*/")
+
+    def read_settings(self):
+        with open(SETTINGS_FILE) as data:
+            settings = json.load(data)
+
+            self.GAME_THREAD_LOG = settings.get('GAME_THREAD_LOG')
+            if self.GAME_THREAD_LOG == None: return "Missing GAME_THREAD_LOG"
+
+        return 0
 
     def getTime(self):
         today = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
