@@ -131,6 +131,40 @@ class BaseballUpdaterBot:
             return random.choice(playerQuips)
         return ""
 
+    def usePlayerNickNames(self, description):
+        newDesc = description
+        #    .replace("Pete Alonso", "POLAR BEAR")\
+        #    .replace("Aaron Altherr", "A-A-RON")\
+        #    .replace("Luis Avilan", "AVI")\
+        #    .replace("Robinson Cano", "NOLO")\
+        #    .replace("Yoenis Cespedes", "LA POTENCIA")\
+        #    .replace("Michael Conforto", "FORTO")\
+        #    .replace("J.D. Davis", "DIZZLE")\
+        #    .replace("Jacob deGrom", "deGROM")\
+        #    .replace("Edwin Diaz", "SUGAR")\
+        #    .replace("Jeurys Familia", "YAGUATE")\
+        #    .replace("Todd Frazier", "TODDFATHER")\
+        #    .replace("Robert Gsellman", "G")\
+        #    .replace("Luis Guillorme", "LUISMI")\
+        #    .replace("Donnie Hart", "D.HART")\
+        #    .replace("Adeiny Hechavarria", "LA PANTERA UUFF")\
+        #    .replace("Juan Lagares", "JUAN JR")\
+        #    .replace("Walter Lockett", "🔒")\
+        #    .replace("Seth Lugo", "QUARTERRICAN")\
+        #    .replace("Steven Matz", "MATZY")\
+        #    .replace("Chris Mazza", "MAZZ")\
+        #    .replace("Jeff McNeil", "FLYING SQUIRREL")\
+        #    .replace("Tomas Nido", "NEEDZ")\
+        #    .replace("Brandon Nimmo", "TATER")\
+        #    .replace("Wilson Ramos", "BUFFALO")\
+        #    .replace("Amed Rosario", "ROSIE")\
+        #    .replace("Dominic Smith", "SUG")\
+        #    .replace("Marcus Stroman", "HDMH")\
+        #    .replace("Zack Wheeler", "WHEELS")\
+        #    .replace("Justin Wilson", "J WILLY")\
+        #    .replace("Joe Panik", "J. P.")
+        return newDesc
+
     def formatGameEventForDiscord(self, gameEvent, linescore):
         return "```" \
                "{}\n" \
@@ -141,7 +175,7 @@ class BaseballUpdaterBot:
                                           if not self.gameEventInningBeforeCurrentLinescoreInning(linescore, gameEvent)
                                           else self.formatLinescoreCatchingUpForDiscord(gameEvent, linescore),
                            self.formatPitchCount(gameEvent['gameEvent'], gameEvent['balls'], gameEvent['strikes']),
-                           gameEvent['description'],
+                           self.usePlayerNickNames(gameEvent['description']),
                            self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(gameEvent))
 
@@ -150,7 +184,7 @@ class BaseballUpdaterBot:
                "{}\n" \
                "```\n" \
                "{}" \
-               "{}".format(gameEvent['description'],
+               "{}".format(self.usePlayerNickNames(gameEvent['description']),
                            self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(gameEvent))
 
@@ -301,6 +335,7 @@ class BaseballUpdaterBot:
         if 'Defensive Switch' in gameEvent['event']: isPlayerChange = True
         if 'Offensive Sub' in gameEvent['event']: isPlayerChange = True
         if 'Game Advisory' in gameEvent['event']: isPlayerChange = True
+        if 'Umpire Substitution' in gameEvent['event']: isPlayerChange = True
         return isPlayerChange
 
     async def run(self, client, channel):
@@ -354,8 +389,9 @@ class BaseballUpdaterBot:
                     break
 
                 print("[{}] Searching for day's URL...".format(self.getTime()))
+                print(url)
                 try:
-                    # If it returns a 404, try again
+                    # If it returns a 404, wait and try again
                     async with aiohttp.ClientSession() as session:
                         async with session.get(url) as resp:
                             if resp.status == 200:
@@ -372,6 +408,7 @@ class BaseballUpdaterBot:
                                         print("[{}] Found game directory for team {}: {}".format(self.getTime(),
                                                                                                  self.TEAM_CODE,
                                                                                                  directories))
+                            await asyncio.sleep(20)
                 except:
                     print("[{}] Couldn't find URL \"{}\", trying again...".format(self.getTime(), url))
                     await asyncio.sleep(20)
@@ -424,7 +461,7 @@ class BaseballUpdaterBot:
                 logging.exception("Exception occured")
                 #await client.send_message(channel, "Bot encountered an error.  Was there a review on the field?")
 
-            await asyncio.sleep(10)
+            await asyncio.sleep(1000)
 
         print("/*------------- End of Bot.run() -------------*/")
 
