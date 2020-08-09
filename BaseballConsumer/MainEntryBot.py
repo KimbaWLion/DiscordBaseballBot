@@ -12,7 +12,7 @@ import discord
 
 from BaseballConsumerV2 import BaseballUpdaterBotV2
 
-SETTINGS_FILE = './settings.json'
+SETTINGS_FILE = './discordSettings.doNotUpload.json'
 
 client = discord.Client()
 # logging.basicConfig(level=logging.DEBUG)
