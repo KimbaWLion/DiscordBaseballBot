@@ -1,7 +1,4 @@
 {
     "GAME_THREAD_LOG": "<Path to game_thread.now>",
-    "BOT_TIME_ZONE": "ET",
-    "TEAM_TIME_ZONE": "ET",
-    "TEAM_CODE": "nyn",
-    "TEAM_ABBREV": "NYM"
+    "TEAM_ID": 121
 }

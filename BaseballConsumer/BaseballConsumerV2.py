@@ -15,7 +15,6 @@ import asyncio
 import discord
 import json
 
-METS_TEAM_ID = 121
 SETTINGS_FILE = './settings.json'
 
 # Game Status Constants
@@ -48,7 +47,7 @@ class BaseballUpdaterBotV2:
             todaysGame = (datetime.now() - timedelta(hours=5))
 
 
-            sched = statsapi.schedule(date=todaysGame.strftime("%m/%d/%Y"),team=METS_TEAM_ID)
+            sched = statsapi.schedule(date=todaysGame.strftime("%m/%d/%Y"),team=self.TEAM_ID)
             if not sched:
                 print("[{}] No game today".format(self.getTime()))
                 await asyncio.sleep(1000)
@@ -127,6 +126,9 @@ class BaseballUpdaterBotV2:
 
             self.GAME_THREAD_LOG = settings.get('GAME_THREAD_LOG')
             if self.GAME_THREAD_LOG == None: return "Missing GAME_THREAD_LOG"
+
+            self.TEAM_ID = settings.get('TEAM_ID')
+            if self.TEAM_ID == None: return "Missing TEAM_ID"
 
         return 0
 
