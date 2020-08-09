@@ -6,11 +6,11 @@ Main entry point for the bot.
 This module performs the start-up, login and reads out the settings to configure
 the bot.
 """
-import discord
-from BaseballConsumer import BaseballUpdaterBot
-from BaseballConsumerV2 import BaseballUpdaterBotV2
 import json
 
+import discord
+
+from BaseballConsumerV2 import BaseballUpdaterBotV2
 
 SETTINGS_FILE = './settings.json'
 
