@@ -44,6 +44,7 @@ class BaseballUpdaterBotV2:
         print('in BaseballUpdaterBotV2.run()')
 
         while True:
+            idsOfPrevEvents = self.getEventIdsFromLog()
             todaysGame = (datetime.now() - timedelta(hours=5))
 
 
@@ -51,29 +52,75 @@ class BaseballUpdaterBotV2:
             if not sched:
                 print("[{}] No game today".format(self.getTime()))
                 await asyncio.sleep(1000)
+            how_long_to_wait_in_sec = 300
             for game in sched:
-                if game['status'] == 'Scheduled':
+                homeTeamNames = self.lookupTeamInfo(game['home_id'])
+                awayTeamNames = self.lookupTeamInfo(game['away_id'])
+                print(game)
+                gameStatus = game['status']
+                gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['game_id'])])
+                if gameStatus == 'Scheduled':
                     print("[{}] Game is Scheduled".format(self.getTime()))
-                    await asyncio.sleep(300)
-                if game['status'] == 'Pre-Game':
+                    how_long_to_wait_in_sec = how_long_to_wait_in_sec
+                if gameStatus == 'Game Over':
+                    print("[{}] Game is Over".format(self.getTime()))
+                    how_long_to_wait_in_sec = how_long_to_wait_in_sec
+                if gameStatus == 'Postponed':
+                    print("[{}] Game is Postponed".format(self.getTime()))
+                    how_long_to_wait_in_sec = how_long_to_wait_in_sec
+                if gameStatus == 'Final':
+                    print("[{}] Game is Final".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await channel.send(self.commentOnDiscordStatus(game))
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Delayed: Rain':
+                    print("[{}] Game is in Rain Delay".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await channel.send(self.commentOnDiscordStatus(game))
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Completed Early: Rain':
+                    print("[{}] Game is Completed Early: Rain".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await channel.send(self.commentOnDiscordStatus(game))
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Pre-Game':
                     print("[{}] Game is Pre-Game".format(self.getTime()))
-                    await asyncio.sleep(60)
-                if game['status'] == 'Warmup':
+                    if gameStatusId not in idsOfPrevEvents:
+                        await channel.send(self.commentOnDiscordStatus(game))
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 60
+                if gameStatus == 'Warmup':
                     print("[{}] Game is Warmup".format(self.getTime()))
-                    # self.warmupStatus(info)
-                    await asyncio.sleep(60)
-                if game['status'] == 'In Progress':
+                    if gameStatusId not in idsOfPrevEvents:
+                        await channel.send(self.commentOnDiscordStatus(game))
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 60
+                if gameStatus == 'In Progress':
+                    how_long_to_wait_in_sec = 10
                     print("[{}] Game is in Progress".format(self.getTime()))
                     gameInfo = statsapi.get('game', {'gamePk': game['game_id']})
                     liveData = gameInfo['liveData']
                     plays = liveData['plays']['allPlays']
                     linescore = liveData['linescore']
+                    fullLinescoreString = statsapi.linescore(game['game_id'])
                     for play in plays:
                         if not 'description' in play['result'].keys():
                             continue
 
+
                         # Get info from plays
                         info = {}
+                        info['homeTeamFullName'] = homeTeamNames['name']
+                        info['homeTeamName'] = homeTeamNames['teamName']
+                        info['homeTeamShortFullName'] = homeTeamNames['shortName']
+                        info['homeTeamAbbv'] = homeTeamNames['fileCode']
+                        info['awayTeamFullName'] = awayTeamNames['name']
+                        info['awayTeamName'] = awayTeamNames['teamName']
+                        info['awayTeamShortFullName'] = awayTeamNames['shortName']
+                        info['awayTeamAbbv'] = awayTeamNames['fileCode']
                         info['startTime'] = play['about']['startTime']
                         info['inning'] = str(play['about']['inning'])
                         info['inningHalf'] = play['about']['halfInning']
@@ -104,20 +151,18 @@ class BaseballUpdaterBotV2:
                         info['inningState_linescore'] = linescore['inningState'] # Middle or End
                         info['inningHalf_linescore'] = linescore['inningHalf']
 
+                        info['fullLinescoreString'] = fullLinescoreString
+
+                        # playType isn't working, do it yourself
+                        info['playTypeActual'] = self.getPlayType(info['description'])
+
                         info['id'] = ''.join([info['startTime'],';',info['outs'],';',info['inning'],';',info['homeScore'],';',info['awayScore'],';',info['description'].replace(" ", "")])
-                        idsOfPrevEvents = self.getEventIdsFromLog()
                         if info['id'] not in idsOfPrevEvents:
                             self.printToLog(info)
-                            await channel.send(self.commentOnDiscord(info))
-                            if 'Status Change' in info['description']: print(play)
+                            await channel.send(self.commentOnDiscordEvent(info))
+                            #if 'Status Change' in info['description']: print(play)
 
-                if game['status'] == 'Game Over':
-                    print("[{}] Game is Over".format(self.getTime()))
-                    await asyncio.sleep(60)
-                if game['status'] == 'Final':
-                    print("[{}] Game is Final".format(self.getTime()))
-                    await asyncio.sleep(300)
-            await asyncio.sleep(10)
+            await asyncio.sleep(how_long_to_wait_in_sec)
         print("/*------------- End of Bot.run() -------------*/")
 
     def read_settings(self):
@@ -142,6 +187,12 @@ class BaseballUpdaterBotV2:
         log.close()
         print("[{}] New atBat: {}".format(self.getTime(), info['description']))
 
+    def printStatusToLog(self, statusId, status):
+        with open(self.GAME_THREAD_LOG, "a") as log:
+            log.write("[{}] [{}] | {}\n".format(self.getTime(), statusId, status))
+        log.close()
+        print("[{}] New status: {}".format(self.getTime(), statusId))
+
     def getEventIdsFromLog(self):
         idsFromLog = []
         with open(self.GAME_THREAD_LOG) as log:
@@ -152,8 +203,24 @@ class BaseballUpdaterBotV2:
         log.close()
         return idsFromLog
 
-    def commentOnDiscord(self, info):
-        if info['playType'] == 'atBat':
+    def getPlayType(self, description):
+        if "Status Change" in description: return "statusChange"
+        if "Mound Visit" in description: return "moundVisit"
+        if "Pitching Change" in description: return "pitchingChange"
+        if "Defensive Substitution" in description: return "defensiveSubstitution"
+        if "Offensive Substitution" in description: return "offensiveSubstitution"
+        if "remains in the game" in description: return "remainsInTheGame"
+        return 'atBat'
+
+    def commentOnDiscordStatus(self, game):
+        if game['status'] == "Warmup":
+            return self.warmupStatus(game)
+        return "```" \
+               "Game status - {}" \
+               "```".format(game['status'])
+
+    def commentOnDiscordEvent(self, info):
+        if info['playTypeActual'] == 'atBat':
             comment = self.formatGameEventForDiscord(info)
         else:
             comment = self.formatPlayerChangeForDiscord(info)
@@ -180,10 +247,10 @@ class BaseballUpdaterBotV2:
                "         └───┴──┴──┴──┘".format(
             self.formatInning(info),
             self.formatSecondBase(info['manOnSecond']),
-            "AWA", info['awayStats_linescore']['runs'],info['awayStats_linescore']['hits'], info['awayStats_linescore']['errors'],
+            info['awayTeamAbbv'].upper(), info['awayStats_linescore']['runs'],info['awayStats_linescore']['hits'], info['awayStats_linescore']['errors'],
             self.formatThirdBase(info['manOnThird']), self.formatFirstBase(info['manOnFirst']),
             self.formatOuts(info['outs']),
-            "HOM", info['homeStats_linescore']['runs'],info['homeStats_linescore']['hits'], info['homeStats_linescore']['errors']
+            info['homeTeamAbbv'].upper(), info['homeStats_linescore']['runs'],info['homeStats_linescore']['hits'], info['homeStats_linescore']['errors']
         )
 
     def gameEventInningBeforeCurrentLinescoreInning(self, info):
@@ -226,7 +293,7 @@ class BaseballUpdaterBotV2:
 
     def endOfInning(self, info):
         if info['outs'] == "3":
-            endOfInningString = "```------ End of {} ------```".format(self.formatInning(info))
+            endOfInningString = "```------ End of {} ------\n{}```".format(self.formatInning(info), info['fullLinescoreString'])
             if info['inning'] == "7" and info['inningHalf'] == "Top":
                 endOfInningString = "{}\n{}".format(endOfInningString, SEVENTH_INNING_STRETCH)
             return endOfInningString
@@ -241,7 +308,7 @@ class BaseballUpdaterBotV2:
                            "", #self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(info))
 
-    def warmupStatus(self, info):
+    def warmupStatus(self, game):
         pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
                       "{:<3}: {} {} ({}-{} {})".format(
             "away team", "away pitcher throwing hand",
@@ -255,6 +322,13 @@ class BaseballUpdaterBotV2:
 
     def gameStartedStatus(self): # Start of game post
         return (discord.Embed(title=GAMESTARTED_TITLE, description=GAMESTARTED_DESCRIPTION), GAMESTARTED_BODY)
+
+    def lookupTeamInfo(self, id):
+        teamInfoList = statsapi.lookup_team(id)
+        if len(teamInfoList) != 1:
+            print("Team id", id, "cannot be resolved to a single team")
+            return
+        return teamInfoList[0]
 
 
 if __name__ == '__main__':
