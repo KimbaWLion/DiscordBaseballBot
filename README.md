@@ -100,6 +100,8 @@ If there is an ID which was not there before, the bot posts to discord and appen
    as such, they will not show up in a replay of events form the game
 
 # Changelog
+* 3-7-21
+  * Game statuses now get posted
 * 3-6-21
   * Bot is now updated to version 2.0, using new MLB stats API
   * Updated README to be correct

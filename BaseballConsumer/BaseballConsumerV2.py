@@ -3,9 +3,9 @@
 BASEBALL GAME THREAD BOT
 
 Written by:
-/u/KimbaWLion
+KimbaWLion
 
-Please contact us on Reddit or Github if you have any questions.
+Please contact us on Github if you have any questions.
 
 '''
 
@@ -184,7 +184,10 @@ class BaseballUpdaterBotV2:
                         # playType isn't working, do it yourself
                         info['playTypeActual'] = self.getPlayType(info['description'])
 
+                        # Generate ID unique for each play
                         info['id'] = ''.join([info['startTime'],';',info['outs'],';',info['inning'],';',info['homeScore'],';',info['awayScore'],';',info['description'].replace(" ", "")])
+
+                        # if ID is not in log, add it to log and then post update on Discord
                         if info['id'] not in idsOfPrevEvents:
                             self.printToLog(info)
                             await channel.send(self.commentOnDiscordEvent(info))
