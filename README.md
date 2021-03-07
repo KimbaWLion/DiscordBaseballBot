@@ -1,5 +1,5 @@
 # DiscordBaseballBot
-Posts baseball game updates to a discord channel
+Posts baseball game updates to a discord channel in near real time
 
 ![Image of game updates](https://i.imgur.com/or2syfZ.png)
 
@@ -11,58 +11,66 @@ Image of RBI emoji and end of the game
 
 
 This is a working project to create a baseball updater bot to post game updates in a Discord channel.
-This will rely heavily from the [reddit baseball updater bot](https://github.com/mattabullock/Baseball-GDT-Bot)
-that posted to reddit threads. It will also rely on python discord bots that already exist.  
+
+V2 leverages https://pypi.org/project/MLB-StatsAPI/ for getting near real time updates of MLB games, it also relies on
+python discord bots that already exist.
+
+Deprecated V1 relied heavily from the [reddit baseball updater bot](https://github.com/mattabullock/Baseball-GDT-Bot)
+that posted to reddit threads.
 
 Please do not expect tests or regular updates, this is a pet project moreso as a proof of concept than 
 anything well maintained.  If there is interest in it, I will expand it out to make it customizable
 and easier to use for all major league teams.
 
 # How it works
-The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get game event and stat information.  The bot compares the IDs from gd2.mlb.com with what it has already logged in game_thread.now.  If there is an ID which was not there before, the bot posts to discord and appends the game event to the game_thread.now log.
+The bot queries https://pypi.org/project/MLB-StatsAPI/ every 10 seconds to get game event and stat information.
+The bot compares the IDs for each new event with what it has already logged in game_thread.now.
+If there is an ID which was not there before, the bot posts to discord and appends the game event to the game_thread.now log.
 
 # How to use
 1. [Create a discord bot and add it to your server](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token)
-2. Edit settings.json to have the tokens/ids/team codes you desire (Lookup the TEAM_ABBREV and TEAM_CODE values for your preferred team in the table below).
+2. Edit settings.json to have the TEAM_ID that you desire (Lookup the TEAM_ID values for your preferred team in the table below).
 3. Create a blank file BaseballConsumer/logs/game_thread.now
-4. Make sure to download discord.py (v0.16.17), aiohttp.py (v1.0.5), asyncio.py, beautifulsoup4 (v4.6.0) packages
-5. Make sure you are running a python interpretter version 3.6.  If you're running not (3.5- or 3.7+), [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).  (If you are running on a mac and python 3.6, you need to install the certificates.  Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
-6. run MainEntryBot.py the day of the game
-7. When game is finished, wait until the next day and run MainEntryBot.py again
+4. Make sure to download discord.py (v0.16.17), aiohttp.py (v1.0.5), asyncio.py, MLB-StatsAPI (v0.1.8) packages
+5. Make sure you are running a python interpretter version 3.6.  If you're running not (3.5- or 3.7+),
+ [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).
+  (If you are running on a mac and python 3.6, you need to install the certificates.
+  Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
+6. run MainEntryBot.py
 
 # Team code and abbreviation table
-|     TEAM     | TEAM_ABBREV | TEAM_CODE |
-| ------------ |:-----------:|:---------:|
-| Diamondbacks |     ARI     |    ari    |
-| Braves       |     ATL     |    atl    |
-| Orioles      |     BAL     |    bal    |
-| Red Sox      |     BOS     |    bos    |
-| White Sox    |     CWS     |    cha    |
-| Cubs         |     CHC     |    chn    |
-| Reds         |     CIN     |    cin    |
-| Indians      |     CLE     |    cle    |
-| Rockies      |     COL     |    col    |
-| Tigers       |     DET     |    det    |
-| Astros       |     HOU     |    hou    |
-| Royals       |     KC      |    kca    |
-| Angels       |     LAA     |    ana    |
-| Dodgers      |     LAD     |    lan    |
-| Marlins      |     MIA     |    mia    |
-| Brewers      |     MIL     |    mil    |
-| Twins        |     MIN     |    min    |
-| Yankees      |     NYY     |    nya    |
-| Mets         |     NYM     |    nyn    |
-| Athletics    |     OAK     |    oak    |
-| Phillies     |     PHI     |    phi    |
-| Pirates      |     PIT     |    pit    |
-| Padres       |     SD      |    sdn    |
-| Giants       |     SF      |    sfn    |
-| Mariners     |     SEA     |    sea    |
-| Cardinals    |     STL     |    sln    |
-| Rays         |     TB      |    tba    |
-| Rangers      |     TEX     |    tex    |
-| Blue Jays    |     TOR     |    tor    |
-| Nationals    |     WSH     |    was    |
+|     TEAM     | TEAM_ID |
+| ------------ |:---------:|
+| Diamondbacks |        |
+| Braves       |        |
+| Orioles      |        |
+| Red Sox      |        |
+| White Sox    |        |
+| Cubs         |        |
+| Reds         |        |
+| Indians      |        |
+| Rockies      |        |
+| Tigers       |        |
+| Astros       |        |
+| Royals       |        |
+| Angels       |        |
+| Dodgers      |        |
+| Marlins      |        |
+| Brewers      |        |
+| Twins        |        |
+| Yankees      |        |
+| Mets         |    121    |
+| Athletics    |        |
+| Phillies     |        |
+| Pirates      |        |
+| Padres       |        |
+| Giants       |        |
+| Mariners     |        |
+| Cardinals    |        |
+| Rays         |        |
+| Rangers      |        |
+| Blue Jays    |        |
+| Nationals    |        |
 
 # Files
 * DiscordPoster/\_\_init\_\_.py
@@ -76,15 +84,20 @@ The bot queries http://gd2.mlb.com/components/game/mlb/ every 10 seconds to get 
 * BaseballConsumer/MainEntryBot.py
   * Run this to run the bot.  Want to move it to the DiscordPoster directory, but need to be able to import BaseballConsumer.py.  I don't know how to import across directories in Python
 * BaseballConsumer/BaseballConsumer.py
-  * The controller for checking if there is a game event update.  It finds the URL for the game on gameday, then calls  	game_events_parser.py to parse the data from gd2.mlb.com.  If there is an update, it posts it to discord and logs the event.
+  * @Deprecated
+* BaseballConsumer/BaseballConsumerV2.py
+  * The controller for checking if there is a game event update.  It calls MLBStatsAPI, and if there is an update, it posts it to discord and logs the event.
 * BaseballConsumer/game_events_parser.py
-  * Parses the game events (atbats and actions) from gd2.mlb.com/.../game_events.json
+  * @Deprecated
 * BaseballConsumer/linescore_parser.py
-  * Parses the linescore (team name/runs/hits/errors) from gd2.mlb.com/.../linescore.json
+  * @Deprecated
 * BaseballConsumer/timecheck.py
-  * Not used, but supposed to be used to determine when a day ends to change the URL searched for.
+  * @Deprecated
 
 # Changelog
+* 3-6-21
+  * Bot is now updated to version 2.0, using new MLB stats API
+  * Updated README to be correct
 * 5-15-19
   * Bot now states that it is catching up if it is behind in the game
   * Fixed Grand slam emotes
