@@ -56,49 +56,78 @@ class BaseballUpdaterBotV2:
             for game in sched:
                 homeTeamNames = self.lookupTeamInfo(game['home_id'])
                 awayTeamNames = self.lookupTeamInfo(game['away_id'])
-                print(game)
+                print(game) ################## Remove this after debug
+
+                # First, check if the game status has changed
                 gameStatus = game['status']
                 gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['game_id'])])
                 if gameStatus == 'Scheduled':
                     print("[{}] Game is Scheduled".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, game)
+                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = how_long_to_wait_in_sec
+                if gameStatus == 'Warmup':
+                    print("[{}] Game is Warmup".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, game)
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 60
                 if gameStatus == 'Game Over':
                     print("[{}] Game is Over".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, game)
+                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = how_long_to_wait_in_sec
                 if gameStatus == 'Postponed':
                     print("[{}] Game is Postponed".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, game)
+                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = how_long_to_wait_in_sec
                 if gameStatus == 'Final':
                     print("[{}] Game is Final".format(self.getTime()))
                     if gameStatusId not in idsOfPrevEvents:
-                        await channel.send(self.commentOnDiscordStatus(game))
+                        await self.postGameStatusOnDiscord(channel, game)
                         self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 300
                 if gameStatus == 'Delayed: Rain':
                     print("[{}] Game is in Rain Delay".format(self.getTime()))
                     if gameStatusId not in idsOfPrevEvents:
-                        await channel.send(self.commentOnDiscordStatus(game))
+                        await self.postGameStatusOnDiscord(channel, game)
                         self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 300
                 if gameStatus == 'Completed Early: Rain':
                     print("[{}] Game is Completed Early: Rain".format(self.getTime()))
                     if gameStatusId not in idsOfPrevEvents:
-                        await channel.send(self.commentOnDiscordStatus(game))
+                        await self.postGameStatusOnDiscord(channel, game)
                         self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 300
                 if gameStatus == 'Pre-Game':
                     print("[{}] Game is Pre-Game".format(self.getTime()))
                     if gameStatusId not in idsOfPrevEvents:
-                        await channel.send(self.commentOnDiscordStatus(game))
+                        await self.postGameStatusOnDiscord(channel, game)
                         self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 60
-                if gameStatus == 'Warmup':
-                    print("[{}] Game is Warmup".format(self.getTime()))
+                if gameStatus == 'Game Over: Tied':
+                    print("[{}] Game is Game Over: Tied".format(self.getTime()))
                     if gameStatusId not in idsOfPrevEvents:
-                        await channel.send(self.commentOnDiscordStatus(game))
+                        await self.postGameStatusOnDiscord(channel, game)
                         self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = 60
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Final: Tied':
+                    print("[{}] Game is Final: Tied".format(self.getTime()))
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, game)
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 300
                 if gameStatus == 'In Progress':
+                    # Game Started update
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, game)
+                        self.printStatusToLog(gameStatusId, gameStatus)
+
+                    # Game Event logic
                     how_long_to_wait_in_sec = 10
                     print("[{}] Game is in Progress".format(self.getTime()))
                     gameInfo = statsapi.get('game', {'gamePk': game['game_id']})
@@ -109,7 +138,6 @@ class BaseballUpdaterBotV2:
                     for play in plays:
                         if not 'description' in play['result'].keys():
                             continue
-
 
                         # Get info from plays
                         info = {}
@@ -160,9 +188,10 @@ class BaseballUpdaterBotV2:
                         if info['id'] not in idsOfPrevEvents:
                             self.printToLog(info)
                             await channel.send(self.commentOnDiscordEvent(info))
-                            #if 'Status Change' in info['description']: print(play)
 
             await asyncio.sleep(how_long_to_wait_in_sec)
+
+        # Should never reach here
         print("/*------------- End of Bot.run() -------------*/")
 
     def read_settings(self):
@@ -212,12 +241,55 @@ class BaseballUpdaterBotV2:
         if "remains in the game" in description: return "remainsInTheGame"
         return 'atBat'
 
-    def commentOnDiscordStatus(self, game):
-        if game['status'] == "Warmup":
-            return self.warmupStatus(game)
-        return "```" \
-               "Game status - {}" \
-               "```".format(game['status'])
+    async def postGameStatusOnDiscord(self, channel, game):
+        gameStatusEmbed = discord.Embed(title="Game status {} has no current post content".format(game['status']),
+                                              description="Game status {} has no current post content".format(game['status']))
+        gameStatusPost = "Game status {} has no current post content".format(game['status'])
+
+        # Different embeds and posts for each status
+        if game['status'] == 'Scheduled':
+            gameStatusEmbed = discord.Embed(title="SCHEDULED_GAME_STATUS_TITLE", description="SCHEDULED_GAME_STATUS_DESCRIPTION")
+            gameStatusPost = "SCHEDULED_GAME_STATUS_BODY"
+        if game['status'] == 'Pre-Game':
+            gameStatusEmbed = discord.Embed(title="PREGAME_STATUS_TITLE", description="PREGAME_STATUS_DESCRIPTION")
+            gameStatusPost = "PREGAME_STATUS_BODY"
+        if game['status'] == 'Warm Up':
+            pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
+                          "{:<3}: {} {} ({}-{} {})".format(
+                "away team", "away pitcher throwing hand",
+                "away pitcher name", "away pitcher wins",
+                "away pitcher losses", "away pitcher era",
+                "home team", "home pitcher throwing hand",
+                "home pitcher name", "home pitcher wins",
+                "home pitcher losses", "home pitcher era")
+            gameStatusEmbed = discord.Embed(title=WARMUP_TITLE, description=WARMUP_DESCRIPTION)
+            gameStatusPost = pregamePost
+        if game['status'] == 'In Progress':
+            gameStatusEmbed = discord.Embed(title=GAMESTARTED_TITLE, description=GAMESTARTED_DESCRIPTION)
+            gameStatusPost = GAMESTARTED_BODY
+        if game['status'] == 'Delayed: Rain':
+            gameStatusEmbed = discord.Embed(title="RAIN_DELAY_STATUS_PLACEHOLDER_TITLE", description="RAIN_DELAY_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "RAIN_DELAY_STATUS_PLACEHOLDER_BODY"
+        if game['status'] == 'Completed Early: Rain':
+            gameStatusEmbed = discord.Embed(title="COMPLETED_EARLY_RAIN_PLACEHOLDER_TITLE", description="COMPLETED_EARLY_RAIN_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "COMPLETED_EARLY_RAIN_STATUS_PLACEHOLDER_BODY"
+        if game['status'] == 'Postponed':
+            gameStatusEmbed = discord.Embed(title="POSTPONED_STATUS_PLACEHOLDER_TITLE", description="POSTPONED_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "POSTPONED_STATUS_PLACEHOLDER_BODY"
+        if game['status'] == 'Game Over':
+            gameStatusEmbed = discord.Embed(title="GAME_OVER_STATUS_PLACEHOLDER_TITLE", description="GAME_OVER_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "GAME_OVER_STATUS_PLACEHOLDER_BODY"
+        if game['status'] == 'Final':
+            gameStatusEmbed = discord.Embed(title="FINAL_STATUS_PLACEHOLDER_TITLE", description="FINAL_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "FINAL_STATUS_PLACEHOLDER_BODY"
+        if game['status'] == 'Game Over: Tied':
+            gameStatusEmbed = discord.Embed(title="GAME_OVER_TIED_STATUS_PLACEHOLDER_TITLE", description="GAME_OVER_TIED_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "GAME_OVER_TIED_STATUS_PLACEHOLDER_BODY"
+        if game['status'] == 'Final: Tied':
+            gameStatusEmbed = discord.Embed(title="FINAL_TIED_STATUS_PLACEHOLDER_TITLE", description="FINAL_TIED_STATUS_PLACEHOLDER_DESCRIPTION")
+            gameStatusPost = "FINAL_TIED_STATUS_PLACEHOLDER_BODY"
+        await channel.send(embed=gameStatusEmbed)
+        await channel.send(gameStatusPost)
 
     def commentOnDiscordEvent(self, info):
         if info['playTypeActual'] == 'atBat':
@@ -293,8 +365,8 @@ class BaseballUpdaterBotV2:
 
     def endOfInning(self, info):
         if info['outs'] == "3":
-            endOfInningString = "```------ End of {} ------\n{}```".format(self.formatInning(info), info['fullLinescoreString'])
-            if info['inning'] == "7" and info['inningHalf'] == "Top":
+            endOfInningString = "```------ End of {} ------\n{}\n------ End of {} ------```".format(self.formatInning(info), info['fullLinescoreString'], self.formatInning(info))
+            if info['inning'] == "7" and info['inningHalf'].upper()[0:3] == "TOP":
                 endOfInningString = "{}\n{}".format(endOfInningString, SEVENTH_INNING_STRETCH)
             return endOfInningString
         return ""
@@ -307,21 +379,6 @@ class BaseballUpdaterBotV2:
                "{}".format(info['description'],
                            "", #self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(info))
-
-    def warmupStatus(self, game):
-        pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
-                      "{:<3}: {} {} ({}-{} {})".format(
-            "away team", "away pitcher throwing hand",
-            "away pitcher name", "away pitcher wins",
-            "away pitcher losses", "away pitcher era",
-            "home team", "home pitcher throwing hand",
-            "home pitcher name", "home pitcher wins",
-            "home pitcher losses", "home pitcher era")
-        return (discord.Embed(title=WARMUP_TITLE, description=WARMUP_DESCRIPTION),
-                pregamePost)
-
-    def gameStartedStatus(self): # Start of game post
-        return (discord.Embed(title=GAMESTARTED_TITLE, description=GAMESTARTED_DESCRIPTION), GAMESTARTED_BODY)
 
     def lookupTeamInfo(self, id):
         teamInfoList = statsapi.lookup_team(id)
