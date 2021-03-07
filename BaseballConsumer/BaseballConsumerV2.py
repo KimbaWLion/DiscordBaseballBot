@@ -56,6 +56,7 @@ class BaseballUpdaterBotV2:
             for game in sched:
                 homeTeamNames = self.lookupTeamInfo(game['home_id'])
                 awayTeamNames = self.lookupTeamInfo(game['away_id'])
+                print(game) ################## Remove this after debug
 
                 # First, check if the game status has changed
                 gameStatus = game['status']
