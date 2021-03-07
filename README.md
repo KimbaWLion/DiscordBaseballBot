@@ -94,6 +94,11 @@ If there is an ID which was not there before, the bot posts to discord and appen
 * BaseballConsumer/timecheck.py
   * @Deprecated
 
+# FAQ
+* How come when I play the bot for a previous game, it doesn't post things such as wild pitches or pitching changes?
+  * Limitation of the API.  Wild pitches, Substitutions, and some other events don't have their own event item in the response from the API,
+   as such, they will not show up in a replay of events form the game
+
 # Changelog
 * 3-6-21
   * Bot is now updated to version 2.0, using new MLB stats API
