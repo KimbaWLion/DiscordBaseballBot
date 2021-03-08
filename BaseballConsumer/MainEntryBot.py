@@ -7,9 +7,7 @@ This module performs the start-up, login and reads out the settings to configure
 the bot.
 """
 import json
-
 import discord
-
 from BaseballConsumerV2 import BaseballUpdaterBotV2
 
 SETTINGS_FILE = './discordSettings.doNotUpload.json'
