@@ -83,6 +83,8 @@ If there is an ID which was not there before, the bot posts to discord and appen
   * Needed to be able to import other files in the directory I think...
 * BaseballConsumer/MainEntryBot.py
   * Run this to run the bot.  Want to move it to the DiscordPoster directory, but need to be able to import BaseballConsumer.py.  I don't know how to import across directories in Python
+* BaseballConsumer/BaseballConsumerConstants.py
+  * Contains configurable constants like emoji or game status updates or 7th inning stretch
 * BaseballConsumer/BaseballConsumer.py
   * @Deprecated
 * BaseballConsumer/BaseballConsumerV2.py
