@@ -32,7 +32,6 @@ class BaseballUpdaterBotV2:
             idsOfPrevEvents = self.getEventIdsFromLog()
             todaysGame = (datetime.now() - timedelta(hours=5))
 
-
             sched = statsapi.schedule(date=todaysGame.strftime("%m/%d/%Y"),team=self.TEAM_ID)
             if not sched:
                 print("[{}] No game today".format(self.getTime()))
@@ -46,75 +45,37 @@ class BaseballUpdaterBotV2:
                 # First, check if the game status has changed
                 gameStatus = game['status']
                 gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['game_id'])])
+                if gameStatusId not in idsOfPrevEvents:
+                    await self.postGameStatusOnDiscord(channel, game)
+                    self.printStatusToLog(gameStatusId, gameStatus)
+                print("[{}] Game is {}".format(self.getTime(), gameStatus))
+
+                # Change the update period based on the gameStatus
                 if gameStatus == 'Scheduled':
-                    print("[{}] Game is Scheduled".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = how_long_to_wait_in_sec
-                if gameStatus == 'Warmup':
-                    print("[{}] Game is Warmup".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = 60
-                if gameStatus == 'Game Over':
-                    print("[{}] Game is Over".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = how_long_to_wait_in_sec
-                if gameStatus == 'Postponed':
-                    print("[{}] Game is Postponed".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = how_long_to_wait_in_sec
-                if gameStatus == 'Final':
-                    print("[{}] Game is Final".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = 300
-                if gameStatus == 'Delayed: Rain':
-                    print("[{}] Game is in Rain Delay".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
-                    how_long_to_wait_in_sec = 300
-                if gameStatus == 'Completed Early: Rain':
-                    print("[{}] Game is Completed Early: Rain".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 300
                 if gameStatus == 'Pre-Game':
-                    print("[{}] Game is Pre-Game".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 60
+                if gameStatus == 'Warmup':
+                    how_long_to_wait_in_sec = 60
+                if gameStatus == 'Game Over':
+                    how_long_to_wait_in_sec = 60
+                if gameStatus == 'Postponed':
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Final':
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Delayed: Rain':
+                    how_long_to_wait_in_sec = 300
+                if gameStatus == 'Completed Early: Rain':
+                    how_long_to_wait_in_sec = 300
                 if gameStatus == 'Game Over: Tied':
-                    print("[{}] Game is Game Over: Tied".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 300
                 if gameStatus == 'Final: Tied':
-                    print("[{}] Game is Final: Tied".format(self.getTime()))
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
                     how_long_to_wait_in_sec = 300
+
                 if gameStatus == 'In Progress':
-                    # Game Started update
-                    if gameStatusId not in idsOfPrevEvents:
-                        await self.postGameStatusOnDiscord(channel, game)
-                        self.printStatusToLog(gameStatusId, gameStatus)
+                    how_long_to_wait_in_sec = 10
 
                     # Game Event logic
-                    how_long_to_wait_in_sec = 10
-                    print("[{}] Game is in Progress".format(self.getTime()))
                     gameInfo = statsapi.get('game', {'gamePk': game['game_id']})
                     liveData = gameInfo['liveData']
                     plays = liveData['plays']['allPlays']
@@ -227,6 +188,8 @@ class BaseballUpdaterBotV2:
         if "Defensive Substitution" in description: return "defensiveSubstitution"
         if "Offensive Substitution" in description: return "offensiveSubstitution"
         if "remains in the game" in description: return "remainsInTheGame"
+        if "Game Advisory" in description: return "gameAdvisory"
+        if "Umpire Substitution" in description: return "umpireSubstitution"
         return 'atBat'
 
     async def postGameStatusOnDiscord(self, channel, game):
@@ -236,11 +199,11 @@ class BaseballUpdaterBotV2:
 
         # Different embeds and posts for each status
         if game['status'] == 'Scheduled':
-            gameStatusEmbed = discord.Embed(title="SCHEDULED_GAME_STATUS_TITLE", description="SCHEDULED_GAME_STATUS_DESCRIPTION")
-            gameStatusPost = "SCHEDULED_GAME_STATUS_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.SCHEDULED_GAME_STATUS_TITLE, description=constants.SCHEDULED_GAME_STATUS_DESCRIPTION)
+            gameStatusPost = constants.SCHEDULED_GAME_STATUS_BODY
         if game['status'] == 'Pre-Game':
-            gameStatusEmbed = discord.Embed(title="PREGAME_STATUS_TITLE", description="PREGAME_STATUS_DESCRIPTION")
-            gameStatusPost = "PREGAME_STATUS_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.PREGAME_STATUS_TITLE, description=constants.PREGAME_STATUS_DESCRIPTION)
+            gameStatusPost = constants.PREGAME_STATUS_BODY
         if game['status'] == 'Warm Up':
             pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
                           "{:<3}: {} {} ({}-{} {})".format(
