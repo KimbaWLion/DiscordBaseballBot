@@ -14,24 +14,9 @@ from datetime import datetime, timedelta
 import asyncio
 import discord
 import json
+import BaseballConsumerConstants as constants
 
 SETTINGS_FILE = './settings.json'
-
-# Game Status Constants
-WARMUP_TITLE = 'Game\'s about to start, everyone get in here!'
-WARMUP_DESCRIPTION = "Let's go win this one!" # Meet the Mets, meet the Mets.  Step right up and greet the Mets...
-WARMUP_BODY_ALTERNATIVE = "https://www.youtube.com/watch?v=6GsCmnZnllk" # MTM https://www.youtube.com/watch?v=6GsCmnZnllk
-
-GAMESTARTED_TITLE = 'Play ball!'
-GAMESTARTED_DESCRIPTION = 'HYPE HYPE HYPE HYPE HYPE HYPE HYPE'
-GAMESTARTED_BODY = "Let's go Mets!"
-
-GAMEENDED_WIN_TITLE = 'Put it in the books!'
-GAMEENDED_WIN_BODY = 'https://www.youtube.com/watch?v=mmwic9kFx2c' ## (TCB) 'https://www.youtube.com/watch?v=mmwic9kFx2c'
-GAMEENDED_LOSS_TITLE = 'Mets defeated' # Mets defeated
-GAMEENDED_LOSS_BODY = 'https://cdn.discordapp.com/attachments/411210054591578122/465340387037544448/killme.png' # We will get \'em next time  ## (dolphin) 'https://cdn.discordapp.com/attachments/411210054591578122/465340387037544448/killme.png')
-
-SEVENTH_INNING_STRETCH = 'SEVENTH INNING STRETCH TIME!\nhttps://youtu.be/Tg3C0nvenro' # (Lazy Mary) https://youtu.be/Tg3C0nvenro
 
 class BaseballUpdaterBotV2:
 
@@ -265,32 +250,33 @@ class BaseballUpdaterBotV2:
                 "home team", "home pitcher throwing hand",
                 "home pitcher name", "home pitcher wins",
                 "home pitcher losses", "home pitcher era")
-            gameStatusEmbed = discord.Embed(title=WARMUP_TITLE, description=WARMUP_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.WARMUP_TITLE, description=constants.WARMUP_DESCRIPTION)
             gameStatusPost = pregamePost
+        # Specifically for Game Started (only goes first time game becomes "In Progress"
         if game['status'] == 'In Progress':
-            gameStatusEmbed = discord.Embed(title=GAMESTARTED_TITLE, description=GAMESTARTED_DESCRIPTION)
-            gameStatusPost = GAMESTARTED_BODY
+            gameStatusEmbed = discord.Embed(title=constants.GAMESTARTED_TITLE, description=constants.GAMESTARTED_DESCRIPTION)
+            gameStatusPost = constants.GAMESTARTED_BODY
         if game['status'] == 'Delayed: Rain':
-            gameStatusEmbed = discord.Embed(title="RAIN_DELAY_STATUS_PLACEHOLDER_TITLE", description="RAIN_DELAY_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "RAIN_DELAY_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.RAINDELAY_TITLE, description=constants.RAINDELAY_DESCRIPTION)
+            gameStatusPost = constants.RAINDELAY_BODY
         if game['status'] == 'Completed Early: Rain':
-            gameStatusEmbed = discord.Embed(title="COMPLETED_EARLY_RAIN_PLACEHOLDER_TITLE", description="COMPLETED_EARLY_RAIN_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "COMPLETED_EARLY_RAIN_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.COMPLETEDEARLYRAIN_TITLE, description=constants.COMPLETEDEARLYRAIN_DESCRIPTION)
+            gameStatusPost = constants.COMPLETEDEARLYRAIN_BODY
         if game['status'] == 'Postponed':
-            gameStatusEmbed = discord.Embed(title="POSTPONED_STATUS_PLACEHOLDER_TITLE", description="POSTPONED_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "POSTPONED_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.POSTPONED_TITLE, description=constants.POSTPONED_DESCRIPTION)
+            gameStatusPost = constants.POSTPONED_BODY
         if game['status'] == 'Game Over':
-            gameStatusEmbed = discord.Embed(title="GAME_OVER_STATUS_PLACEHOLDER_TITLE", description="GAME_OVER_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "GAME_OVER_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.GAMEOVER_TITLE, description=constants.GAMEOVER_DESCRIPTION)
+            gameStatusPost = constants.GAMEOVER_BODY
         if game['status'] == 'Final':
-            gameStatusEmbed = discord.Embed(title="FINAL_STATUS_PLACEHOLDER_TITLE", description="FINAL_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "FINAL_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.FINAL_TITLE, description=constants.FINAL_DESCRIPTION)
+            gameStatusPost = constants.FINAL_BODY
         if game['status'] == 'Game Over: Tied':
-            gameStatusEmbed = discord.Embed(title="GAME_OVER_TIED_STATUS_PLACEHOLDER_TITLE", description="GAME_OVER_TIED_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "GAME_OVER_TIED_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.GAMEOVERTIED_TITLE, description=constants.GAMEOVERTIED_DESCRIPTION)
+            gameStatusPost = constants.GAMEOVERTIED_BODY
         if game['status'] == 'Final: Tied':
-            gameStatusEmbed = discord.Embed(title="FINAL_TIED_STATUS_PLACEHOLDER_TITLE", description="FINAL_TIED_STATUS_PLACEHOLDER_DESCRIPTION")
-            gameStatusPost = "FINAL_TIED_STATUS_PLACEHOLDER_BODY"
+            gameStatusEmbed = discord.Embed(title=constants.FINALTIED_TITLE, description=constants.FINALTIED_DESCRIPTION)
+            gameStatusPost = constants.FINALTIED_BODY
         await channel.send(embed=gameStatusEmbed)
         await channel.send(gameStatusPost)
 
@@ -370,7 +356,7 @@ class BaseballUpdaterBotV2:
         if info['outs'] == "3":
             endOfInningString = "```------ End of {} ------\n{}\n------ End of {} ------```".format(self.formatInning(info), info['fullLinescoreString'], self.formatInning(info))
             if info['inning'] == "7" and info['inningHalf'].upper()[0:3] == "TOP":
-                endOfInningString = "{}\n{}".format(endOfInningString, SEVENTH_INNING_STRETCH)
+                endOfInningString = "{}\n{}".format(endOfInningString, constants.SEVENTH_INNING_STRETCH)
             return endOfInningString
         return ""
 
