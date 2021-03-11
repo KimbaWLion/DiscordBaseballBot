@@ -86,6 +86,8 @@ If there is an ID which was not there before, the bot posts to discord and appen
    as such, they will not show up in a replay of events form the game
 
 # Changelog
+* 3-10-21
+  * Added "No Game Today" as a possible game status
 * 3-7-21
   * Game statuses now get posted
 * 3-6-21

@@ -31,16 +31,19 @@ class BaseballUpdaterBotV2:
         while True:
             idsOfPrevEvents = self.getEventIdsFromLog()
             todaysGame = (datetime.now() - timedelta(hours=5))
+            how_long_to_wait_in_sec = 300
 
             sched = statsapi.schedule(date=todaysGame.strftime("%m/%d/%Y"),team=self.TEAM_ID)
             if not sched:
+                noGameId = ''.join(["NoGameToday", todaysGame.strftime("%m/%d/%Y")])
+                if noGameId not in idsOfPrevEvents:
+                    await self.postNoGameStatusOnDiscord(channel)
+                    self.printNoGameToLog(noGameId)
                 print("[{}] No game today".format(self.getTime()))
-                await asyncio.sleep(1000)
-            how_long_to_wait_in_sec = 300
+                how_long_to_wait_in_sec = 1000
             for game in sched:
                 homeTeamNames = self.lookupTeamInfo(game['home_id'])
                 awayTeamNames = self.lookupTeamInfo(game['away_id'])
-                print(game) ################## Remove this after debug
 
                 # First, check if the game status has changed
                 gameStatus = game['status']
@@ -171,6 +174,9 @@ class BaseballUpdaterBotV2:
         log.close()
         print("[{}] New status: {}".format(self.getTime(), statusId))
 
+    def printNoGameToLog(self, noGameId):
+        self.printStatusToLog(noGameId, "No Game Today")
+
     def getEventIdsFromLog(self):
         idsFromLog = []
         with open(self.GAME_THREAD_LOG) as log:
@@ -190,7 +196,15 @@ class BaseballUpdaterBotV2:
         if "remains in the game" in description: return "remainsInTheGame"
         if "Game Advisory" in description: return "gameAdvisory"
         if "Umpire Substitution" in description: return "umpireSubstitution"
+        if "Injury Delay" in description: return "injuryDelay"
         return 'atBat'
+
+    async def postNoGameStatusOnDiscord(self, channel):
+        gameStatusEmbed = discord.Embed(title=constants.NO_GAME_STATUS_TITLE,
+                                        description=constants.NO_GAME_STATUS_DESCRIPTION)
+        gameStatusPost = constants.NO_GAME_STATUS_BODY
+        await channel.send(embed=gameStatusEmbed)
+        await channel.send(gameStatusPost)
 
     async def postGameStatusOnDiscord(self, channel, game):
         gameStatusEmbed = discord.Embed(title="Game status {} has no current post content".format(game['status']),
@@ -202,8 +216,8 @@ class BaseballUpdaterBotV2:
             gameStatusEmbed = discord.Embed(title=constants.SCHEDULED_GAME_STATUS_TITLE, description=constants.SCHEDULED_GAME_STATUS_DESCRIPTION)
             gameStatusPost = constants.SCHEDULED_GAME_STATUS_BODY
         if game['status'] == 'Pre-Game':
-            gameStatusEmbed = discord.Embed(title=constants.PREGAME_STATUS_TITLE, description=constants.PREGAME_STATUS_DESCRIPTION)
-            gameStatusPost = constants.PREGAME_STATUS_BODY
+            gameStatusEmbed = discord.Embed(title=constants.PREGAME_TITLE, description=constants.PREGAME_DESCRIPTION)
+            gameStatusPost = constants.PREGAME_BODY
         if game['status'] == 'Warm Up':
             pregamePost = "{:<3}: {} {} ({}-{} {})\n" \
                           "{:<3}: {} {} ({}-{} {})".format(
