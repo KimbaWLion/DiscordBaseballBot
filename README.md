@@ -86,6 +86,9 @@ If there is an ID which was not there before, the bot posts to discord and appen
    as such, they will not show up in a replay of events form the game
 
 # Changelog
+* 3-11-21
+  * Strikeout Tracker is back baby!
+  * RBI and Homerun tracker is back as well!
 * 3-10-21
   * Added "No Game Today" as a possible game status
 * 3-7-21

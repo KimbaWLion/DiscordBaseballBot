@@ -84,7 +84,9 @@ class BaseballUpdaterBotV2:
                     plays = liveData['plays']['allPlays']
                     linescore = liveData['linescore']
                     fullLinescoreString = statsapi.linescore(game['game_id'])
+                    strikeoutTracker = {'home': [], 'away': []} # Boolean list, true = swinging, false = looking
                     for play in plays:
+                        # If the item is not full yet (as in the atbat is finished) skip
                         if not 'description' in play['result'].keys():
                             continue
 
@@ -107,6 +109,7 @@ class BaseballUpdaterBotV2:
                         info['homeScore'] = str(play['result']['homeScore'])
                         info['awayScore'] = str(play['result']['awayScore'])
                         info['description'] = play['result']['description']
+                        info['event'] = play['result']['event']
                         info['rbi'] = play['result']['rbi']
                         info['playType'] = play['result']['type']
                         info['manOnFirst'] = True if 'postOnFirst' in play['matchup'] else False
@@ -128,10 +131,30 @@ class BaseballUpdaterBotV2:
                         info['inningState_linescore'] = linescore['inningState'] # Middle or End
                         info['inningHalf_linescore'] = linescore['inningHalf']
 
+                        # Get full linescore summary
                         info['fullLinescoreString'] = fullLinescoreString
 
                         # playType isn't working, do it yourself
                         info['playTypeActual'] = self.getPlayType(info['description'])
+
+                        # Update strikeout tracker
+                        if info['event'] == 'Strikeout':
+                            if self.homeTeamBatting(info):
+                                currentStrikeouts = strikeoutTracker['away']
+                                if "strikes out" in info['description']:
+                                    currentStrikeouts.append(True)
+                                if "called out on strikes" in info['description']:
+                                    currentStrikeouts.append(False)
+                                strikeoutTracker['away'] = currentStrikeouts
+                            else:
+                                currentStrikeouts = strikeoutTracker['home']
+                                if "strikes out" in info['description']:
+                                    currentStrikeouts.append(True)
+                                if "called out on strikes" in info['description']:
+                                    currentStrikeouts.append(False)
+                                strikeoutTracker['home'] = currentStrikeouts
+                        info['strikeoutTracker'] = strikeoutTracker
+
 
                         # Generate ID unique for each play
                         info['id'] = ''.join([info['startTime'],';',info['outs'],';',info['inning'],';',info['homeScore'],';',info['awayScore'],';',info['description'].replace(" ", "")])
@@ -274,7 +297,7 @@ class BaseballUpdaterBotV2:
                                           if not self.gameEventInningBeforeCurrentLinescoreInning(info)
                                           else self.formatLinescoreCatchingUpForDiscord(info),
                            self.formatPitchCount(info), info['description'],
-                           "", #self.playerismsAndEmoji(gameEvent, linescore)
+                           self.funEmoji(info),
                            self.endOfInning(info))
 
     def formatLinescoreForDiscord(self, info):
@@ -341,9 +364,7 @@ class BaseballUpdaterBotV2:
         return "```" \
                "{}\n" \
                "```\n" \
-               "{}" \
                "{}".format(info['description'],
-                           "", #self.playerismsAndEmoji(gameEvent, linescore),
                            self.endOfInning(info))
 
     def lookupTeamInfo(self, id):
@@ -353,6 +374,45 @@ class BaseballUpdaterBotV2:
             return
         return teamInfoList[0]
 
+    def homeTeamBatting(self, info):
+        return info['inningHalf'].upper()[0:3] == "BOT"
+
+    def funEmoji(self, info):
+        print(info)
+        emoji = ""
+
+        ## Pitching emoji
+        if info['strikes'] == '3':
+            if self.homeTeamBatting(info):
+                emoji = "{} K Tracker ({}): ".format(info['awayTeamName'], len(info['strikeoutTracker']['away']))
+                for swingingStrikeout in info['strikeoutTracker']['away']:
+                    if swingingStrikeout: emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT])
+                    else:                 emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT_LOOKING])
+            else:
+                emoji = "{} K Tracker ({}): ".format(info['homeTeamName'], len(info['strikeoutTracker']['home']))
+                for swingingStrikeout in info['strikeoutTracker']['home']:
+                    if swingingStrikeout: emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT])
+                    else:                 emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT_LOOKING])
+            emoji = ''.join([emoji, '\n'])
+
+        ## Batting emoji
+        # Grand Slam
+        if info['event'] == 'Home Run' and info['rbi'] == '4': # "grand slam" in info['description']:
+            emoji = ''.join([emoji, constants.EMOTE_GRAND_SLAM, "\n"])
+        # Home Run
+        elif info['event'] == 'Home Run' and info['rbi'] != '4': # ("homers" in info['description']) or ("home run" in info['description']):
+            emoji = ''.join([emoji, constants.EMOTE_HOMERUN, "\n"])
+        # RBIs
+        for rbis in range(info['rbis']):
+            emoji = ''.join([emoji, constants.EMOTE_RBI, " "])
+        # Earned runs that are not RBIs
+        for earnedRunsNotRBIs in range(info['runsEarned'] - info['rbis']):
+            emoji = ''.join([emoji, constants.EMOTE_EARNED_RUN, " "])
+        # Unearned runs
+        for unearnedRunsNotRBIs in range(info['runsScored'] - info['runsEarned']):
+            emoji = ''.join([emoji, constants.EMOTE_UNEARNED_RUN, " "])
+
+        return emoji
 
 if __name__ == '__main__':
     baseballUpdaterBot = BaseballUpdaterBotV2()
