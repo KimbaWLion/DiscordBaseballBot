@@ -163,45 +163,7 @@ If there is an ID which was not there before, the bot posts to discord and appen
   * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
 
 # Buglog
-* 4-28-18
-  * ~~Infinite loop on offdays.  The bot doesn't search for new URLs after offdays, making the bot get stuck in an infinite loop and not search for the next days' games.~~
-    * 4-28-18 - fixed, added a break out based on the current date
-  * ~~TEAM_CODE exists in more than one directory on the index page.  'pit' (TEAM_CODE for pittsburgh) exists int he directory 'pitchers', breaking the bot.~~
-    * 4-28-18 - fixed, now the bot searches for TEAM_CODE+'mlb', not just the TEAM_CODE, fixing this issue
-  * ~~After the 3rd out of an inning, the bot lags behind for the rest of the game.~~
-    * 4-28-18 - The global linescore status was not being initialized correctly at the end of an inning because of the new runnerOnBaseStatus fields that I added.  I added in more initializations and now it works fine :)
-* 3-8-18
-  * ~~MLB.com changed how they use `runner_on_base_status` in the linescore.  Before it used to be a number 0-7 that said whether there were men on the bases, where 1 meant man on first, 3 meant man on third, 4 meant men on first and second, and 7 mean bases loaded.  Now there are attributes `runner_on_1b`, `runner_on_2b`, and `runner_on_3b`, which lists which player_id is on each bag.~~
-    * I fixed this by calling tracking runner_on_1b instead of runner_on_base_status
-  * ~~The urls are not splitting anymore by '\n'.  I have no clue why, but it's messing with actually finding the URLs of the game, and splitting by a single space (' ') doesn't seem to be working.~~  
-    * ~~I should use beautiful soup to parse out the HTML~~
-    * 4-28-18 - I used BeautifulSoup to parse it out and it works :)
-* 8-26-17
-  * ~~If a game event happens but there is no RBI, bot does not post an emoji about a run scored.  An example of this is if a wild pitch scores a runner.  The gameEvents JSON has "score: T", and I should try to find a way to use that to post when there are runs scored, not just when there are RBIs~~
-    * 4-04-19 - fixed, now there are new emoji's for non-RBI runs
-* 5-8-17
-  * ~~There are race conditions when there game actions (not atbats).  In order to make sure the linescore was accurate, I do not have the bot post the next atbat until the currentBatterId in both linescore.json and game_events.json match.  However, if there is a game event, it doesn't mention currentBatterId and as such posts immediately.  So sometimes there is "Coaching visit to the mound" followed by "grand slam" rather than the other way around. Another race condition, if there is a stolen base, it the linescore often does not reflect the stolen base in update.~~  
-    * ~~5-8-17 - This should be fixed now with the globalLinescoreStatus update~~
-    * ~~5-21-17 - linescore still is sometimes out of sync, but mostly okay~~
-    * This is fixed :)
-* 4-27-17
-  * Managers' challenges break the bot (if they overturn the call) for some reason.  I put it in a try catch that ignores the exception in these cases.  No clue why it's failing.
+* 3-12-18
+  * Stolen bases/pickoffs/caugh stealing/wild pitch aren't their own event, so if the bot is behind (even by 1 play), it doesn't do the stolen base
 
 # Future Features
-* ~~Fix race conditions~~
-  * 5-8-17 - Completed
-* Leverage Mike Trout revision to be able to post uniquely for every player. (i.e. post Thor's hammer whenever Syndergaard gets a hit)
-* ~~Allow the bot to change over the date itself so that you can leave it running instead of needing to restart it every day~~
-  * 3-26-18 - Completed
-* Add in emoji for Stolen bases
-* ~~Add in shruggy emoji for runs scored but not an RBI for favorite team~~
-  * 4-04-19 - Completed
-* Add in no-hitter/perfect game celebrations
-* ~~Do not show the linescore or onBaseStatus when the bot lags behinds and is catching up (since they are 100% out of sync)~~
-  * 4-04-19 - Completed
-* Add emoji or bot comment for ejections
-* Add delayed start as a game status
-* ~~When catching up from previous innings, do not show linescore/onBaseStatus~~
-  * 4-04-19 - Completed
-* Fix the debugger to be more descriptive
-* If mlb.com services are down, instead of crashing the bot, be able to handle "endpoint request timed out"
