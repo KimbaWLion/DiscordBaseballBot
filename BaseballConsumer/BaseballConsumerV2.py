@@ -30,12 +30,12 @@ class BaseballUpdaterBotV2:
 
         while True:
             idsOfPrevEvents = self.getEventIdsFromLog()
-            todaysGame = (datetime.now() - timedelta(hours=5))
+            todaysGame = (datetime.now() - timedelta(hours=5)).strftime("%m/%d/%Y")
             how_long_to_wait_in_sec = 300
 
-            sched = statsapi.schedule(date=todaysGame.strftime("%m/%d/%Y"),team=self.TEAM_ID)
+            sched = statsapi.schedule(date=todaysGame,team=self.TEAM_ID)
             if not sched:
-                noGameId = ''.join(["NoGameToday", todaysGame.strftime("%m/%d/%Y")])
+                noGameId = ''.join(["NoGameToday", todaysGame])
                 if noGameId not in idsOfPrevEvents:
                     await self.postNoGameStatusOnDiscord(channel)
                     self.printNoGameToLog(noGameId)
@@ -47,7 +47,8 @@ class BaseballUpdaterBotV2:
 
                 # First, check if the game status has changed
                 gameStatus = game['status']
-                gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['game_id'])])
+                gameStatusWaitTime = how_long_to_wait_in_sec # default wait of 300 sec
+                gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['game_id']), todaysGame])
                 if gameStatusId not in idsOfPrevEvents:
                     await self.postGameStatusOnDiscord(channel, game)
                     self.printStatusToLog(gameStatusId, gameStatus)
@@ -55,28 +56,28 @@ class BaseballUpdaterBotV2:
 
                 # Change the update period based on the gameStatus
                 if gameStatus == 'Scheduled':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
                 if gameStatus == 'Pre-Game':
-                    how_long_to_wait_in_sec = 60
+                    gameStatusWaitTime = 60
                 if gameStatus == 'Warmup':
-                    how_long_to_wait_in_sec = 60
+                    gameStatusWaitTime = 60
                 if gameStatus == 'Game Over':
-                    how_long_to_wait_in_sec = 60
+                    gameStatusWaitTime = 60
                 if gameStatus == 'Postponed':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
                 if gameStatus == 'Final':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
                 if gameStatus == 'Delayed: Rain':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
                 if gameStatus == 'Completed Early: Rain':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
                 if gameStatus == 'Game Over: Tied':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
                 if gameStatus == 'Final: Tied':
-                    how_long_to_wait_in_sec = 300
+                    gameStatusWaitTime = 300
 
                 if gameStatus == 'In Progress':
-                    how_long_to_wait_in_sec = 10
+                    gameStatusWaitTime = 10
 
                     # Game Event logic
                     gameInfo = statsapi.get('game', {'gamePk': game['game_id']})
@@ -163,6 +164,10 @@ class BaseballUpdaterBotV2:
                         if info['id'] not in idsOfPrevEvents:
                             self.printToLog(info)
                             await channel.send(self.commentOnDiscordEvent(info))
+
+                # If game is a doubleheader, if the 2nd game has a longer wait time than the first, use the first's wait time
+                gameIsDoubleHeader = game['doubleheader'] == "Y"
+                how_long_to_wait_in_sec = gameStatusWaitTime if not gameIsDoubleHeader else (how_long_to_wait_in_sec if how_long_to_wait_in_sec < gameStatusWaitTime else gameStatusWaitTime)
 
             await asyncio.sleep(how_long_to_wait_in_sec)
 
