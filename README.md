@@ -29,7 +29,7 @@ If there is an ID which was not there before, the bot posts to discord and appen
 2. Put the token information in the file discordSettings.doNotUpload.json
 2. Edit settings.json to have the TEAM_ID that you desire (Lookup the TEAM_ID values for your preferred team in the table below).
 3. Create a blank file BaseballConsumer/logs/game_thread.now
-4. Make sure to download discord.py (v0.16.17), aiohttp.py (v1.0.5), asyncio.py, MLB-StatsAPI (v0.1.8) packages
+4. Make sure to download discord.py (v0.16.17), aiohttp.py (v1.0.5), asyncio.py, MLB-StatsAPI (v0.1.8), pytz (v2021.1) packages
 5. Make sure you are running a python interpretter version 3.6.  If you're running not (3.5- or 3.7+),
  [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).
   (If you are running on a mac and python 3.6, you need to install the certificates.
@@ -86,6 +86,9 @@ If there is an ID which was not there before, the bot posts to discord and appen
    as such, they will not show up in a replay of events form the game
 
 # Changelog
+* 4-21-21
+  * Game Scheduled status shows teams and win-loss record as well as game start time
+  * Game Warmup status shows pitchers stats
 * 3-11-21
   * Strikeout Tracker is back baby!
   * RBI and Homerun tracker is back as well!
