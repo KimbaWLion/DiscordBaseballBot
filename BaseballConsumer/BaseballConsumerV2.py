@@ -74,20 +74,27 @@ class BaseballUpdaterBotV2:
                     gameStatusWaitTime = 60
                 if gameStatus == 'Warmup':
                     gameStatusWaitTime = 60
+                if gameStatus == 'In Progress':
+                    gameStatusWaitTime = 10
+                if 'Manager challenge' in gameStatus:
+                    gameStatusWaitTime = 10
                 if gameStatus == 'Postponed':
                     gameStatusWaitTime = 300
-                if gameStatus == 'Final':
+                if 'Game Over' in gameStatus:
+                    gameStatusWaitTime = 60
+                if 'Final' in gameStatus:
                     gameStatusWaitTime = 300
                 if gameStatus == 'Delayed: Rain':
                     gameStatusWaitTime = 300
                 if gameStatus == 'Completed Early: Rain':
                     gameStatusWaitTime = 300
-                if gameStatus == 'Final: Tied':
-                    gameStatusWaitTime = 300
 
+                # If game is a doubleheader, if the 2nd game has a longer wait time than the first, use the first's wait time
+                gameIsDoubleHeader = game['doubleheader'] == "Y"
+                how_long_to_wait_in_sec = gameStatusWaitTime if not gameIsDoubleHeader else (how_long_to_wait_in_sec if how_long_to_wait_in_sec < gameStatusWaitTime else gameStatusWaitTime)
+
+                # If game is currently active, search for plays to post
                 if gameStatus == 'In Progress' or 'Manager challenge' in gameStatus or 'Game Over' in gameStatus:
-                    gameStatusWaitTime = 10
-
                     # Game Event logic
                     gameInfo = statsapi.get('game', {'gamePk': game['game_id']})
                     liveData = gameInfo['liveData']
@@ -174,10 +181,6 @@ class BaseballUpdaterBotV2:
                         if info['id'] not in idsOfPrevEvents:
                             self.printToLog(info)
                             await channel.send(self.commentOnDiscordEvent(info))
-
-                # If game is a doubleheader, if the 2nd game has a longer wait time than the first, use the first's wait time
-                gameIsDoubleHeader = game['doubleheader'] == "Y"
-                how_long_to_wait_in_sec = gameStatusWaitTime if not gameIsDoubleHeader else (how_long_to_wait_in_sec if how_long_to_wait_in_sec < gameStatusWaitTime else gameStatusWaitTime)
 
             await asyncio.sleep(how_long_to_wait_in_sec)
 
