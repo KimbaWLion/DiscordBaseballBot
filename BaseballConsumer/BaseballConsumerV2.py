@@ -35,6 +35,7 @@ class BaseballUpdaterBotV2:
             how_long_to_wait_in_sec = 300
 
             sched = statsapi.schedule(date=todaysGame,team=self.TEAM_ID)
+
             if not sched:
                 noGameId = ''.join(["NoGameToday", todaysGame])
                 if noGameId not in idsOfPrevEvents:
@@ -42,11 +43,14 @@ class BaseballUpdaterBotV2:
                     self.printNoGameToLog(noGameId)
                 print("[{}] No game today".format(self.getTime()))
                 how_long_to_wait_in_sec = 1000
-            for game in sched:
 
+            for game in sched:
                 # Get team names
                 homeTeamInfo = self.lookupTeamInfo(game['home_id'])
                 awayTeamInfo = self.lookupTeamInfo(game['away_id'])
+                # Add current game score
+                homeTeamInfo['game_score'] = game['home_score']
+                awayTeamInfo['game_score'] = game['away_score']
                 # Add team records
                 leagueRecordsSchedule = statsapi.get("schedule",{'sportId':1,"gamePk":game['game_id'],"hydrate":"leagueRecord"})
                 homeTeamInfo['wins'] = leagueRecordsSchedule['dates'][0]['games'][0]['teams']['home']['leagueRecord']['wins']
@@ -70,8 +74,6 @@ class BaseballUpdaterBotV2:
                     gameStatusWaitTime = 60
                 if gameStatus == 'Warmup':
                     gameStatusWaitTime = 60
-                if gameStatus == 'Game Over':
-                    gameStatusWaitTime = 60
                 if gameStatus == 'Postponed':
                     gameStatusWaitTime = 300
                 if gameStatus == 'Final':
@@ -80,12 +82,10 @@ class BaseballUpdaterBotV2:
                     gameStatusWaitTime = 300
                 if gameStatus == 'Completed Early: Rain':
                     gameStatusWaitTime = 300
-                if gameStatus == 'Game Over: Tied':
-                    gameStatusWaitTime = 300
                 if gameStatus == 'Final: Tied':
                     gameStatusWaitTime = 300
 
-                if gameStatus == 'In Progress':
+                if gameStatus == 'In Progress' or 'Manager challenge' in gameStatus or 'Game Over' in gameStatus:
                     gameStatusWaitTime = 10
 
                     # Game Event logic
@@ -95,6 +95,7 @@ class BaseballUpdaterBotV2:
                     linescore = liveData['linescore']
                     fullLinescoreString = statsapi.linescore(game['game_id'])
                     strikeoutTracker = {'home': [], 'away': []} # Boolean list, true = swinging, false = looking
+
                     for play in plays:
                         # If the item is not full yet (as in the atbat is finished) skip
                         if not 'description' in play['result'].keys():
@@ -253,16 +254,18 @@ class BaseballUpdaterBotV2:
         if game['status'] == 'Scheduled':
             gameStart = pytz.utc.localize(datetime.strptime(game['game_datetime'], '%Y-%m-%dT%H:%M:%SZ'))
             localizedGameStart = gameStart.astimezone(pytz.timezone(constants.BOT_TIMEZONE)).strftime("%I:%M %p")
+
             gameStatusEmbed = discord.Embed(title=constants.SCHEDULED_GAME_STATUS_TITLE,
                                             description="The {} ({}-{}) play @ {} ({}-{}) today at {} {}".format(
                                                 awayTeamInfo['teamName'], awayTeamInfo['wins'], awayTeamInfo['losses'],
                                                 homeTeamInfo['teamName'], homeTeamInfo['wins'], homeTeamInfo['losses'],
                                                 localizedGameStart, constants.BOT_TIMEZONE))
             gameStatusPost = constants.SCHEDULED_GAME_STATUS_BODY
+
         if game['status'] == 'Pre-Game':
-            gameStatusEmbed = discord.Embed(title=constants.PREGAME_TITLE,
-                                            description=constants.PREGAME_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.PREGAME_TITLE, description=constants.PREGAME_DESCRIPTION)
             gameStatusPost = constants.PREGAME_BODY
+
         if game['status'] == 'Warmup':
             awayStartingPitcherId = statsapi.lookup_player(game['away_probable_pitcher'])[0]['id']
             awayStartingPitcherData = statsapi.player_stat_data(awayStartingPitcherId, group="pitching", type="season")['stats'][0]['stats']
@@ -277,45 +280,50 @@ class BaseballUpdaterBotV2:
                 homeTeamInfo['teamName'],
                 game['home_probable_pitcher'], homeStartingPitcherData['wins'],
                 homeStartingPitcherData['losses'], homeStartingPitcherData['era'])
-            gameStatusEmbed = discord.Embed(title=constants.WARMUP_TITLE,
-                                            description=pregamePost)
+
+            gameStatusEmbed = discord.Embed(title=constants.WARMUP_TITLE, description=pregamePost)
             gameStatusPost = constants.WARMUP_BODY
+
         # Specifically for Game Started (only goes first time game becomes "In Progress"
         if game['status'] == 'In Progress':
-            gameStatusEmbed = discord.Embed(title=constants.GAMESTARTED_TITLE,
-                                            description=constants.GAMESTARTED_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.GAMESTARTED_TITLE, description=constants.GAMESTARTED_DESCRIPTION)
             gameStatusPost = constants.GAMESTARTED_BODY
+
         if game['status'] == 'Delayed: Rain':
-            gameStatusEmbed = discord.Embed(title=constants.RAINDELAY_TITLE,
-                                            description=constants.RAINDELAY_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.RAINDELAY_TITLE, description=constants.RAINDELAY_DESCRIPTION)
             gameStatusPost = constants.RAINDELAY_BODY
+
         if game['status'] == 'Completed Early: Rain':
-            gameStatusEmbed = discord.Embed(title=constants.COMPLETEDEARLYRAIN_TITLE,
-                                            description=constants.COMPLETEDEARLYRAIN_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.COMPLETEDEARLYRAIN_TITLE, description=constants.COMPLETEDEARLYRAIN_DESCRIPTION)
             gameStatusPost = constants.COMPLETEDEARLYRAIN_BODY
+
         if game['status'] == 'Postponed':
-            gameStatusEmbed = discord.Embed(title=constants.POSTPONED_TITLE.format(game['game_date']),
-                                            description=constants.POSTPONED_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.POSTPONED_TITLE.format(game['game_date']), description=constants.POSTPONED_DESCRIPTION)
             gameStatusPost = constants.POSTPONED_BODY
+
         if game['status'] == 'Game Over':
-            gameStatusEmbed = discord.Embed(title=constants.GAMEOVER_TITLE,
-                                            description=constants.GAMEOVER_DESCRIPTION)
-            gameStatusPost = constants.GAMEOVER_BODY
+            endOfGameAnnouncement = self.formatEndOfGameAnnouncement(awayTeamInfo, homeTeamInfo)
+            if (self.favoriteTeamWon(awayTeamInfo, homeTeamInfo)):
+                gameStatusEmbed = discord.Embed(title=constants.GAMEOVER_WIN_TITLE, description=endOfGameAnnouncement)
+                gameStatusPost = constants.GAMEOVER_WIN_BODY
+            else:
+                gameStatusEmbed = discord.Embed(title=constants.GAMEOVER_LOSS_TITLE, description=endOfGameAnnouncement)
+                gameStatusPost = constants.GAMEOVER_LOSS_BODY
+
         if game['status'] == 'Final':
-            gameStatusEmbed = discord.Embed(title=constants.FINAL_TITLE,
-                                            description=constants.FINAL_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.FINAL_TITLE, description = constants.FINAL_DESCRIPTION)
             gameStatusPost = constants.FINAL_BODY
+
         if game['status'] == 'Game Over: Tied':
-            gameStatusEmbed = discord.Embed(title=constants.GAMEOVERTIED_TITLE,
-                                            description=constants.GAMEOVERTIED_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.GAMEOVERTIED_TITLE, description=constants.GAMEOVERTIED_DESCRIPTION)
             gameStatusPost = constants.GAMEOVERTIED_BODY
+
         if game['status'] == 'Final: Tied':
-            gameStatusEmbed = discord.Embed(title=constants.FINALTIED_TITLE,
-                                            description=constants.FINALTIED_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.FINALTIED_TITLE, description=constants.FINALTIED_DESCRIPTION)
             gameStatusPost = constants.FINALTIED_BODY
+
         if 'Manager challenge' in game['status']:
-            gameStatusEmbed = discord.Embed(title=constants.MANAGER_CHALLENGE_TITLE,
-                                            description=constants.MANAGER_CHALLENGE_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.MANAGER_CHALLENGE_TITLE, description=constants.MANAGER_CHALLENGE_DESCRIPTION)
             gameStatusPost = constants.MANAGER_CHALLENGE_BODY
 
         await channel.send(embed=gameStatusEmbed)
@@ -455,6 +463,24 @@ class BaseballUpdaterBotV2:
             emoji = ''.join([emoji, constants.EMOTE_UNEARNED_RUN, " "])
 
         return emoji
+
+    def checkIfFavoriteTeam(self, teamId):
+        return self.TEAM_ID == teamId
+
+    def formatEndOfGameAnnouncement(self, team1Info, team2Info):
+        favTeamInfo = team1Info if self.checkIfFavoriteTeam(team1Info['id']) else team2Info
+        opponentTeamInfo = team2Info if self.checkIfFavoriteTeam(team1Info['id']) else team1Info
+        beatOrLostTo = "beat" if (favTeamInfo['game_score'] > opponentTeamInfo['game_score']) else "lost to"
+        return "The {} ({}-{}) {} the {} ({}-{}) by a score of {}-{}".format(
+            favTeamInfo['teamName'], favTeamInfo['wins'], favTeamInfo['losses'],
+            beatOrLostTo,
+            opponentTeamInfo['teamName'], opponentTeamInfo['wins'], opponentTeamInfo['losses'],
+            favTeamInfo['game_score'], opponentTeamInfo['game_score'])
+
+    def favoriteTeamWon(self, team1Info, team2Info):
+        favTeamInfo = team1Info if self.checkIfFavoriteTeam(team1Info['id']) else team2Info
+        opponentTeamInfo = team2Info if self.checkIfFavoriteTeam(team1Info['id']) else team1Info
+        return favTeamInfo['game_score'] > opponentTeamInfo['game_score']
 
 if __name__ == '__main__':
     baseballUpdaterBot = BaseballUpdaterBotV2()
