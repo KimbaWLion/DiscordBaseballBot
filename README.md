@@ -86,6 +86,10 @@ If there is an ID which was not there before, the bot posts to discord and appen
    as such, they will not show up in a replay of events form the game
 
 # Changelog
+* 4-22-21
+  * Favorite team vs. Opponents implemented.  Now if your favorite team hits an RBI/homerun/strikeout, it uses different emoji from when your opponent does it
+  * Adding Win/Loss statuses when Game Over.
+  * Manager Challenge status added
 * 4-21-21
   * Game Scheduled status shows teams and win-loss record as well as game start time
   * Game Warmup status shows pitchers stats
