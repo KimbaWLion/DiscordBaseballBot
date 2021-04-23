@@ -16,6 +16,7 @@ import asyncio
 import discord
 import json
 import BaseballConsumerConstants as constants
+from TeamAndStandingsUtilities import get_division_for_teamId
 
 SETTINGS_FILE = './settings.json'
 
@@ -63,7 +64,7 @@ class BaseballUpdaterBotV2:
                 gameStatusWaitTime = how_long_to_wait_in_sec # default wait of 300 sec
                 gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['game_id']), todaysGame])
                 if gameStatusId not in idsOfPrevEvents:
-                    await self.postGameStatusOnDiscord(channel, game, awayTeamInfo, homeTeamInfo)
+                    await self.postGameStatusOnDiscord(channel, game, awayTeamInfo, homeTeamInfo, todaysGame)
                     self.printStatusToLog(gameStatusId, gameStatus)
                 print("[{}] Game is {}".format(self.getTime(), gameStatus))
 
@@ -250,7 +251,7 @@ class BaseballUpdaterBotV2:
         if gameStatusPost:
             await channel.send(gameStatusPost)
 
-    async def postGameStatusOnDiscord(self, channel, game, awayTeamInfo, homeTeamInfo):
+    async def postGameStatusOnDiscord(self, channel, game, awayTeamInfo, homeTeamInfo, todaysGame):
         gameStatusEmbed = discord.Embed(title="Game status {} has no current post content".format(game['status']),
                                               description="Game status {} has no current post content".format(game['status']))
         gameStatusPost = "Game status {} has no current post content".format(game['status'])
@@ -316,7 +317,8 @@ class BaseballUpdaterBotV2:
                 gameStatusPost = constants.GAMEOVER_LOSS_BODY
 
         if game['status'] == 'Final':
-            gameStatusEmbed = discord.Embed(title=constants.FINAL_TITLE, description = constants.FINAL_DESCRIPTION)
+            gameStatusEmbed = discord.Embed(title=constants.FINAL_TITLE,
+                                            description='```{}```'.format(statsapi.standings(date=todaysGame, include_wildcard=False, division=get_division_for_teamId(self.TEAM_ID))))
             gameStatusPost = constants.FINAL_BODY
 
         if game['status'] == 'Game Over: Tied':

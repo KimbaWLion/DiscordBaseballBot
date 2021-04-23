@@ -79,6 +79,8 @@ If there is an ID which was not there before, the bot posts to discord and appen
   * Run this to run the bot.  Want to move it to the DiscordPoster directory, but need to be able to import BaseballConsumer.py.  I don't know how to import across directories in Python
 * BaseballConsumer/BaseballConsumerConstants.py
   * Contains configurable constants like emoji or game status updates or 7th inning stretch
+* BaseballConsumer/TeamAndStandingsUtilities.py
+  * Utility file to put helpful functions regarding the team or standings
 
 # FAQ
 * How come when I play the bot for a previous game, it doesn't post things such as wild pitches or pitching changes?
@@ -86,6 +88,8 @@ If there is an ID which was not there before, the bot posts to discord and appen
    as such, they will not show up in a replay of events form the game
 
 # Changelog
+* 4-23-21
+  * Add standings during Final game status
 * 4-22-21
   * Favorite team vs. Opponents implemented.  Now if your favorite team hits an RBI/homerun/strikeout, it uses different emoji from when your opponent does it
   * Adding Win/Loss statuses when Game Over.
