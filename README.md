@@ -115,6 +115,7 @@ DiscordBaseballBot (directory)
 * 4-24-21
   * bugfix for doubleheaders
   * better README instructions
+  * combined 2 API calls into 1
 * 4-23-21
   * Add standings during Final game status
 * 4-22-21
