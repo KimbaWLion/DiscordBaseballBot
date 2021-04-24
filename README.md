@@ -34,6 +34,7 @@ If there is an ID which was not there before, the bot posts to discord and appen
  [asyncio will not work](https://stackoverflow.com/questions/43948454/python-invalid-syntax-with-async-def).
   (If you are running on a mac and python 3.6, you need to install the certificates.
   Follow the instructions [here](https://github.com/Rapptz/discord.py/issues/423))
+6. Edit the BaseballConsumer/BaseballConsumerConstants.py file to replace the placeholder values with whatever you desire
 6. run MainEntryBot.py
 
 # Team code and abbreviation table
@@ -86,6 +87,8 @@ If there is an ID which was not there before, the bot posts to discord and appen
 * How come when I play the bot for a previous game, it doesn't post things such as wild pitches or pitching changes?
   * Limitation of the API.  Wild pitches, Substitutions, and some other events don't have their own event item in the response from the API,
    as such, they will not show up in a replay of events form the game
+* My program had a 'semaphore timeout', what do I do?
+  * Just run the program again, it's a transient issue.
 
 # Changelog
 * 4-23-21
