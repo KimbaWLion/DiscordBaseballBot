@@ -445,14 +445,20 @@ class BaseballUpdaterBotV2:
         if info['strikes'] == '3':
             if self.homeTeamBatting(info):
                 emoji = "{} K Tracker ({}): ".format(info['awayTeamName'], len(info['strikeoutTracker']['away']))
-                for swingingStrikeout in info['strikeoutTracker']['away']:
-                    if swingingStrikeout: emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT         if self.checkIfFavoriteTeam(info['awayTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT])
-                    else:                 emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT_LOOKING if self.checkIfFavoriteTeam(info['awayTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING])
+                if info['strikeoutTracker']['away'] == [True, True, True]: # If KKK, make "3 Ks"
+                    emoji = ''.join([emoji, '3 ', constants.EMOTE_STRIKEOUT if self.checkIfFavoriteTeam(info['awayTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT, 's'])
+                else:
+                    for swingingStrikeout in info['strikeoutTracker']['away']:
+                        if swingingStrikeout: emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT         if self.checkIfFavoriteTeam(info['awayTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT])
+                        else:                 emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT_LOOKING if self.checkIfFavoriteTeam(info['awayTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING])
             else:
                 emoji = "{} K Tracker ({}): ".format(info['homeTeamName'], len(info['strikeoutTracker']['home']))
-                for swingingStrikeout in info['strikeoutTracker']['home']:
-                    if swingingStrikeout: emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT         if self.checkIfFavoriteTeam(info['homeTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT])
-                    else:                 emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT_LOOKING if self.checkIfFavoriteTeam(info['homeTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING])
+                if info['strikeoutTracker']['home'] == [True, True, True]: # If KKK, make "3 Ks"
+                    emoji = ''.join([emoji, '3 ', constants.EMOTE_STRIKEOUT if self.checkIfFavoriteTeam(info['homeTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT, 's'])
+                else:
+                    for swingingStrikeout in info['strikeoutTracker']['home']:
+                        if swingingStrikeout: emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT         if self.checkIfFavoriteTeam(info['homeTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT])
+                        else:                 emoji = ''.join([emoji, constants.EMOTE_STRIKEOUT_LOOKING if self.checkIfFavoriteTeam(info['homeTeamId']) else constants.EMOTE_OTHER_TEAM_STRIKEOUT_LOOKING])
             emoji = ''.join([emoji, '\n'])
 
         ## Batting emoji

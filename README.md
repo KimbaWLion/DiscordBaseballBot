@@ -116,6 +116,7 @@ DiscordBaseballBot (directory)
   * bugfix for doubleheaders
   * better README instructions
   * combined 2 API calls into 1
+  * No longer types out KKK if 3 strikeouts in a row
 * 4-23-21
   * Add standings during Final game status
 * 4-22-21
