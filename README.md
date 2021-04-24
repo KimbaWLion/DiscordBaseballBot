@@ -73,7 +73,9 @@ If there is an ID which was not there before, the bot posts to discord and appen
 
 # Files
 * settings.json
-  * The settings of the bot: The server ID, bot Token, team code, and more
+  * The settings of the bot: The server ID, bot Token, and more
+* discordSettings.doNotUpload.json
+  * The team code and location of the log files
 * BaseballConsumer/\_\_init_\_\.py
   * Needed to be able to import other files in the directory I think...
 * BaseballConsumer/MainEntryBot.py
@@ -83,14 +85,36 @@ If there is an ID which was not there before, the bot posts to discord and appen
 * BaseballConsumer/TeamAndStandingsUtilities.py
   * Utility file to put helpful functions regarding the team or standings
 
+# FileMap when running bot
+This is what your files and directories should look like when you run your bot
+```
+DiscordBaseballBot (directory)
+∟ README.md
+∟ settings.json
+∟ discordSettings.doNotUpload.json
+∟ BaseballConsumer (directory)
+  ∟ __init__.py
+  ∟ BaseballConsumerV2.py
+  ∟ BaseballConsumerConstants.py
+  ∟ TeamAndStandingsUtilities.py
+  ∟ MainEntryBot.py
+  ∟ logs (directory)
+    ∟ game_thread.now
+```
+
 # FAQ
 * How come when I play the bot for a previous game, it doesn't post things such as wild pitches or pitching changes?
   * Limitation of the API.  Wild pitches, Substitutions, and some other events don't have their own event item in the response from the API,
    as such, they will not show up in a replay of events form the game
 * My program had a 'semaphore timeout', what do I do?
   * Just run the program again, it's a transient issue.
+* I am getting a `json.decoder.JSONDecodeError: Invalid \escape: line 2 column 27 (char 28)` error, how do I fix?
+  * In your settings.json file, use forward slashes not backslashes
 
 # Changelog
+* 4-24-21
+  * bugfix for doubleheaders
+  * better README instructions
 * 4-23-21
   * Add standings during Final game status
 * 4-22-21
