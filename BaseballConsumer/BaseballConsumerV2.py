@@ -91,7 +91,7 @@ class BaseballUpdaterBotV2:
                     gameStatusWaitTime = 300
 
                 # If game is a doubleheader, if the 2nd game has a longer wait time than the first, use the first's wait time
-                gameIsDoubleHeader = game['doubleheader'] == "Y"
+                gameIsDoubleHeader = game['doubleheader'] != "N"
                 how_long_to_wait_in_sec = gameStatusWaitTime if not gameIsDoubleHeader else (how_long_to_wait_in_sec if how_long_to_wait_in_sec < gameStatusWaitTime else gameStatusWaitTime)
 
                 # If game is currently active, search for plays to post
