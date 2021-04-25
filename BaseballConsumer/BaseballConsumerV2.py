@@ -488,11 +488,8 @@ class BaseballUpdaterBotV2:
         favTeamInfo = team1Info if self.checkIfFavoriteTeam(team1Info['id']) else team2Info
         opponentTeamInfo = team2Info if self.checkIfFavoriteTeam(team1Info['id']) else team1Info
         beatOrLostTo = "beat" if (favTeamInfo['game_score'] > opponentTeamInfo['game_score']) else "lost to"
-        return "The {} ({}-{}) {} the {} ({}-{}) by a score of {}-{}".format(
-            favTeamInfo['teamName'], favTeamInfo['wins'], favTeamInfo['losses'],
-            beatOrLostTo,
-            opponentTeamInfo['teamName'], opponentTeamInfo['wins'], opponentTeamInfo['losses'],
-            favTeamInfo['game_score'], opponentTeamInfo['game_score'])
+        return "The {} {} the {} by a score of {}-{}".format(
+            favTeamInfo['teamName'], beatOrLostTo, opponentTeamInfo['teamName'], favTeamInfo['game_score'], opponentTeamInfo['game_score'])
 
     def favoriteTeamWon(self, team1Info, team2Info):
         favTeamInfo = team1Info if self.checkIfFavoriteTeam(team1Info['id']) else team2Info
