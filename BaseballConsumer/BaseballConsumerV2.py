@@ -35,7 +35,7 @@ class BaseballUpdaterBotV2:
             todaysGame = (datetime.now() - timedelta(hours=5)).strftime("%m/%d/%Y")
             how_long_to_wait_in_sec = 300
 
-            sched = statsapi.get("schedule", {'sportId': 1, "teamId": self.TEAM_ID, "hydrate": "leagueRecord,decisions,probablePitcher(note),linescore"})
+            sched = statsapi.get("schedule", {'sportId': 1, "teamId": self.TEAM_ID, "date": todaysGame, "hydrate": "leagueRecord,decisions,probablePitcher(note),linescore"})
 
             games = sched['dates'][0]['games']
 
