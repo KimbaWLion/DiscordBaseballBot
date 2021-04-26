@@ -112,6 +112,8 @@ DiscordBaseballBot (directory)
   * In your settings.json file, use forward slashes not backslashes
 
 # Changelog
+* 4-25-21
+  * bugfix for no game today status with new API call
 * 4-24-21
   * bugfix for doubleheaders
   * better README instructions
