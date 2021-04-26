@@ -37,9 +37,7 @@ class BaseballUpdaterBotV2:
 
             sched = statsapi.get("schedule", {'sportId': 1, "teamId": self.TEAM_ID, "date": todaysGame, "hydrate": "leagueRecord,decisions,probablePitcher(note),linescore"})
 
-            games = sched['dates'][0]['games']
-
-            if not games:
+            if not sched['dates']:
                 noGameId = ''.join(["NoGameToday", todaysGame])
                 if noGameId not in idsOfPrevEvents:
                     await self.postNoGameStatusOnDiscord(channel)
@@ -47,149 +45,150 @@ class BaseballUpdaterBotV2:
                 print("[{}] No game today".format(self.getTime()))
                 how_long_to_wait_in_sec = 1000
 
-            for game in games:
-                # Get team names
-                homeTeamInfo = self.lookupTeamInfo(game['teams']['home']['team']['id'])
-                awayTeamInfo = self.lookupTeamInfo(game['teams']['away']['team']['id'])
-                # Add current game score
-                homeTeamInfo['game_score'] = game['linescore']['teams']['home']['runs']
-                awayTeamInfo['game_score'] = game['linescore']['teams']['away']['runs']
-                # Add team records
-                homeTeamInfo['wins'] = game['teams']['home']['leagueRecord']['wins']
-                homeTeamInfo['losses'] = game['teams']['home']['leagueRecord']['losses']
-                awayTeamInfo['wins'] = game['teams']['away']['leagueRecord']['wins']
-                awayTeamInfo['losses'] = game['teams']['away']['leagueRecord']['losses']
-                # Add pitcher data
-                homeTeamInfo['probable_pitcher_name'] = game['teams']['home']['probablePitcher']['fullName']
-                homeTeamInfo['probable_pitcher_id'] = game['teams']['home']['probablePitcher']['id']
-                awayTeamInfo['probable_pitcher_name'] = game['teams']['away']['probablePitcher']['fullName']
-                awayTeamInfo['probable_pitcher_id'] = game['teams']['away']['probablePitcher']['id']
+            else:
+                for game in sched['dates'][0]['games']:
+                    # Get team names
+                    homeTeamInfo = self.lookupTeamInfo(game['teams']['home']['team']['id'])
+                    awayTeamInfo = self.lookupTeamInfo(game['teams']['away']['team']['id'])
+                    # Add current game score
+                    homeTeamInfo['game_score'] = game['linescore']['teams']['home']['runs']
+                    awayTeamInfo['game_score'] = game['linescore']['teams']['away']['runs']
+                    # Add team records
+                    homeTeamInfo['wins'] = game['teams']['home']['leagueRecord']['wins']
+                    homeTeamInfo['losses'] = game['teams']['home']['leagueRecord']['losses']
+                    awayTeamInfo['wins'] = game['teams']['away']['leagueRecord']['wins']
+                    awayTeamInfo['losses'] = game['teams']['away']['leagueRecord']['losses']
+                    # Add pitcher data
+                    homeTeamInfo['probable_pitcher_name'] = game['teams']['home']['probablePitcher']['fullName']
+                    homeTeamInfo['probable_pitcher_id'] = game['teams']['home']['probablePitcher']['id']
+                    awayTeamInfo['probable_pitcher_name'] = game['teams']['away']['probablePitcher']['fullName']
+                    awayTeamInfo['probable_pitcher_id'] = game['teams']['away']['probablePitcher']['id']
 
-                # First, check if the game status has changed
-                gameStatus = game['status']['detailedState']
-                gameStatusWaitTime = how_long_to_wait_in_sec # default wait of 300 sec
-                gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['gamePk']), todaysGame])
-                if gameStatusId not in idsOfPrevEvents:
-                    await self.postGameStatusOnDiscord(channel, gameStatus, awayTeamInfo, homeTeamInfo, todaysGame, game['gameDate'])
-                    self.printStatusToLog(gameStatusId, gameStatus)
-                print("[{}] Game is {}".format(self.getTime(), gameStatus))
+                    # First, check if the game status has changed
+                    gameStatus = game['status']['detailedState']
+                    gameStatusWaitTime = how_long_to_wait_in_sec # default wait of 300 sec
+                    gameStatusId = ''.join([gameStatus.replace(" ", ""), ';', str(game['gamePk']), todaysGame])
+                    if gameStatusId not in idsOfPrevEvents:
+                        await self.postGameStatusOnDiscord(channel, gameStatus, awayTeamInfo, homeTeamInfo, todaysGame, game['gameDate'])
+                        self.printStatusToLog(gameStatusId, gameStatus)
+                    print("[{}] Game is {}".format(self.getTime(), gameStatus))
 
-                # Change the update period based on the gameStatus
-                if gameStatus == 'Scheduled':
-                    gameStatusWaitTime = 300
-                if gameStatus == 'Pre-Game':
-                    gameStatusWaitTime = 60
-                if gameStatus == 'Warmup':
-                    gameStatusWaitTime = 60
-                if gameStatus == 'In Progress':
-                    gameStatusWaitTime = 10
-                if 'Manager challenge' in gameStatus:
-                    gameStatusWaitTime = 10
-                if gameStatus == 'Postponed':
-                    gameStatusWaitTime = 300
-                if 'Game Over' in gameStatus:
-                    gameStatusWaitTime = 60
-                if 'Final' in gameStatus:
-                    gameStatusWaitTime = 300
-                if gameStatus == 'Delayed: Rain':
-                    gameStatusWaitTime = 300
-                if gameStatus == 'Completed Early: Rain':
-                    gameStatusWaitTime = 300
+                    # Change the update period based on the gameStatus
+                    if gameStatus == 'Scheduled':
+                        gameStatusWaitTime = 300
+                    if gameStatus == 'Pre-Game':
+                        gameStatusWaitTime = 60
+                    if gameStatus == 'Warmup':
+                        gameStatusWaitTime = 60
+                    if gameStatus == 'In Progress':
+                        gameStatusWaitTime = 10
+                    if 'Manager challenge' in gameStatus:
+                        gameStatusWaitTime = 10
+                    if gameStatus == 'Postponed':
+                        gameStatusWaitTime = 300
+                    if 'Game Over' in gameStatus:
+                        gameStatusWaitTime = 60
+                    if 'Final' in gameStatus:
+                        gameStatusWaitTime = 300
+                    if gameStatus == 'Delayed: Rain':
+                        gameStatusWaitTime = 300
+                    if gameStatus == 'Completed Early: Rain':
+                        gameStatusWaitTime = 300
 
-                # If game is a doubleheader, if the 2nd game has a longer wait time than the first, use the first's wait time
-                gameIsDoubleHeader = game['doubleHeader'] != "N"
-                how_long_to_wait_in_sec = gameStatusWaitTime if not gameIsDoubleHeader else (how_long_to_wait_in_sec if how_long_to_wait_in_sec < gameStatusWaitTime else gameStatusWaitTime)
+                    # If game is a doubleheader, if the 2nd game has a longer wait time than the first, use the first's wait time
+                    gameIsDoubleHeader = game['doubleHeader'] != "N"
+                    how_long_to_wait_in_sec = gameStatusWaitTime if not gameIsDoubleHeader else (how_long_to_wait_in_sec if how_long_to_wait_in_sec < gameStatusWaitTime else gameStatusWaitTime)
 
-                # If game is currently active, search for plays to post
-                if gameStatus == 'In Progress' or 'Manager challenge' in gameStatus or 'Game Over' in gameStatus:
-                    # Game Event logic
-                    gameInfo = statsapi.get('game', {'gamePk': game['gamePk']})
-                    liveData = gameInfo['liveData']
-                    plays = liveData['plays']['allPlays']
-                    linescore = liveData['linescore']
-                    fullLinescoreString = statsapi.linescore(game['gamePk'])
-                    strikeoutTracker = {'home': [], 'away': []} # Boolean list, true = swinging, false = looking
+                    # If game is currently active, search for plays to post
+                    if gameStatus == 'In Progress' or 'Manager challenge' in gameStatus or 'Game Over' in gameStatus:
+                        # Game Event logic
+                        gameInfo = statsapi.get('game', {'gamePk': game['gamePk']})
+                        liveData = gameInfo['liveData']
+                        plays = liveData['plays']['allPlays']
+                        linescore = liveData['linescore']
+                        fullLinescoreString = statsapi.linescore(game['gamePk'])
+                        strikeoutTracker = {'home': [], 'away': []} # Boolean list, true = swinging, false = looking
 
-                    for play in plays:
-                        # If the item is not full yet (as in the atbat is finished) skip
-                        if not 'description' in play['result'].keys():
-                            continue
+                        for play in plays:
+                            # If the item is not full yet (as in the atbat is finished) skip
+                            if not 'description' in play['result'].keys():
+                                continue
 
-                        # Get info from plays
-                        info = {}
-                        info['homeTeamFullName'] = homeTeamInfo['name']
-                        info['homeTeamName'] = homeTeamInfo['teamName']
-                        info['homeTeamShortFullName'] = homeTeamInfo['shortName']
-                        info['homeTeamAbbv'] = homeTeamInfo['fileCode']
-                        info['homeTeamId'] = homeTeamInfo['id']
-                        info['awayTeamFullName'] = awayTeamInfo['name']
-                        info['awayTeamName'] = awayTeamInfo['teamName']
-                        info['awayTeamShortFullName'] = awayTeamInfo['shortName']
-                        info['awayTeamAbbv'] = awayTeamInfo['fileCode']
-                        info['awayTeamId'] = awayTeamInfo['id']
-                        info['startTime'] = play['about']['startTime']
-                        info['inning'] = str(play['about']['inning'])
-                        info['inningHalf'] = play['about']['halfInning']
-                        info['balls'] = str(play['count']['balls'])
-                        info['strikes'] = str(play['count']['strikes'])
-                        info['outs'] = str(play['count']['outs'])
-                        info['homeScore'] = str(play['result']['homeScore'])
-                        info['awayScore'] = str(play['result']['awayScore'])
-                        info['description'] = play['result']['description']
-                        info['event'] = play['result']['event']
-                        info['rbi'] = play['result']['rbi']
-                        info['playType'] = play['result']['type']
-                        info['manOnFirst'] = True if 'postOnFirst' in play['matchup'] else False
-                        info['manOnSecond'] = True if 'postOnSecond' in play['matchup'] else False
-                        info['manOnThird'] = True if 'postOnThird' in play['matchup'] else False
-                        info['runsScored'] = 0
-                        info['rbis'] = 0
-                        info['runsEarned'] = 0
-                        for runner in play['runners']:
-                            info['runsScored'] += 1 if runner['details']['isScoringEvent'] else 0
-                            info['rbis'] += 1 if runner['details']['rbi'] else 0
-                            info['runsEarned'] += 1 if runner['details']['earned'] else 0
+                            # Get info from plays
+                            info = {}
+                            info['homeTeamFullName'] = homeTeamInfo['name']
+                            info['homeTeamName'] = homeTeamInfo['teamName']
+                            info['homeTeamShortFullName'] = homeTeamInfo['shortName']
+                            info['homeTeamAbbv'] = homeTeamInfo['fileCode']
+                            info['homeTeamId'] = homeTeamInfo['id']
+                            info['awayTeamFullName'] = awayTeamInfo['name']
+                            info['awayTeamName'] = awayTeamInfo['teamName']
+                            info['awayTeamShortFullName'] = awayTeamInfo['shortName']
+                            info['awayTeamAbbv'] = awayTeamInfo['fileCode']
+                            info['awayTeamId'] = awayTeamInfo['id']
+                            info['startTime'] = play['about']['startTime']
+                            info['inning'] = str(play['about']['inning'])
+                            info['inningHalf'] = play['about']['halfInning']
+                            info['balls'] = str(play['count']['balls'])
+                            info['strikes'] = str(play['count']['strikes'])
+                            info['outs'] = str(play['count']['outs'])
+                            info['homeScore'] = str(play['result']['homeScore'])
+                            info['awayScore'] = str(play['result']['awayScore'])
+                            info['description'] = play['result']['description']
+                            info['event'] = play['result']['event']
+                            info['rbi'] = play['result']['rbi']
+                            info['playType'] = play['result']['type']
+                            info['manOnFirst'] = True if 'postOnFirst' in play['matchup'] else False
+                            info['manOnSecond'] = True if 'postOnSecond' in play['matchup'] else False
+                            info['manOnThird'] = True if 'postOnThird' in play['matchup'] else False
+                            info['runsScored'] = 0
+                            info['rbis'] = 0
+                            info['runsEarned'] = 0
+                            for runner in play['runners']:
+                                info['runsScored'] += 1 if runner['details']['isScoringEvent'] else 0
+                                info['rbis'] += 1 if runner['details']['rbi'] else 0
+                                info['runsEarned'] += 1 if runner['details']['earned'] else 0
 
-                        # Get info from linescore
-                        info['outs_linescore'] = linescore['outs']
-                        info['homeStats_linescore'] = linescore['teams']['home'] #runs, hits, errors, lefOnBase
-                        info['awayStats_linescore'] = linescore['teams']['away']
-                        info['currentInning_linescore'] = linescore['currentInning']
-                        info['inningState_linescore'] = linescore['inningState'] # Middle or End
-                        info['inningHalf_linescore'] = linescore['inningHalf']
+                            # Get info from linescore
+                            info['outs_linescore'] = linescore['outs']
+                            info['homeStats_linescore'] = linescore['teams']['home'] #runs, hits, errors, lefOnBase
+                            info['awayStats_linescore'] = linescore['teams']['away']
+                            info['currentInning_linescore'] = linescore['currentInning']
+                            info['inningState_linescore'] = linescore['inningState'] # Middle or End
+                            info['inningHalf_linescore'] = linescore['inningHalf']
 
-                        # Get full linescore summary
-                        info['fullLinescoreString'] = fullLinescoreString
+                            # Get full linescore summary
+                            info['fullLinescoreString'] = fullLinescoreString
 
-                        # playType isn't working, do it yourself
-                        info['playTypeActual'] = self.getPlayType(info['description'])
+                            # playType isn't working, do it yourself
+                            info['playTypeActual'] = self.getPlayType(info['description'])
 
-                        # Update strikeout tracker
-                        if info['event'] == 'Strikeout':
-                            if self.homeTeamBatting(info):
-                                currentStrikeouts = strikeoutTracker['away']
-                                if "strikes out" in info['description']:
-                                    currentStrikeouts.append(True)
-                                if "called out on strikes" in info['description']:
-                                    currentStrikeouts.append(False)
-                                strikeoutTracker['away'] = currentStrikeouts
-                            else:
-                                currentStrikeouts = strikeoutTracker['home']
-                                if "strikes out" in info['description']:
-                                    currentStrikeouts.append(True)
-                                if "called out on strikes" in info['description']:
-                                    currentStrikeouts.append(False)
-                                strikeoutTracker['home'] = currentStrikeouts
-                        info['strikeoutTracker'] = strikeoutTracker
+                            # Update strikeout tracker
+                            if info['event'] == 'Strikeout':
+                                if self.homeTeamBatting(info):
+                                    currentStrikeouts = strikeoutTracker['away']
+                                    if "strikes out" in info['description']:
+                                        currentStrikeouts.append(True)
+                                    if "called out on strikes" in info['description']:
+                                        currentStrikeouts.append(False)
+                                    strikeoutTracker['away'] = currentStrikeouts
+                                else:
+                                    currentStrikeouts = strikeoutTracker['home']
+                                    if "strikes out" in info['description']:
+                                        currentStrikeouts.append(True)
+                                    if "called out on strikes" in info['description']:
+                                        currentStrikeouts.append(False)
+                                    strikeoutTracker['home'] = currentStrikeouts
+                            info['strikeoutTracker'] = strikeoutTracker
 
 
-                        # Generate ID unique for each play
-                        info['id'] = ''.join([info['startTime'].split(":")[0],';',info['outs'],';',info['inning'],';',info['homeScore'],';',info['awayScore'],';',info['description'].replace(" ", "")])
+                            # Generate ID unique for each play
+                            info['id'] = ''.join([info['startTime'].split(":")[0],';',info['outs'],';',info['inning'],';',info['homeScore'],';',info['awayScore'],';',info['description'].replace(" ", "")])
 
-                        # if ID is not in log, add it to log and then post update on Discord
-                        if info['id'] not in idsOfPrevEvents:
-                            self.printToLog(info)
-                            await channel.send(self.commentOnDiscordEvent(info))
+                            # if ID is not in log, add it to log and then post update on Discord
+                            if info['id'] not in idsOfPrevEvents:
+                                self.printToLog(info)
+                                await channel.send(self.commentOnDiscordEvent(info))
 
             await asyncio.sleep(how_long_to_wait_in_sec)
 
