@@ -51,8 +51,9 @@ class BaseballUpdaterBotV2:
                     homeTeamInfo = self.lookupTeamInfo(game['teams']['home']['team']['id'])
                     awayTeamInfo = self.lookupTeamInfo(game['teams']['away']['team']['id'])
                     # Add current game score
-                    homeTeamInfo['game_score'] = game['linescore']['teams']['home']['runs']
-                    awayTeamInfo['game_score'] = game['linescore']['teams']['away']['runs']
+                    # Note, runs isn't always populated :(
+                    homeTeamInfo['game_score'] = game['linescore']['teams']['home']['runs'] if 'runs' in game['linescore']['teams']['home'] else 0
+                    awayTeamInfo['game_score'] = game['linescore']['teams']['away']['runs'] if 'runs' in game['linescore']['teams']['away'] else 0
                     # Add team records
                     homeTeamInfo['wins'] = game['teams']['home']['leagueRecord']['wins']
                     homeTeamInfo['losses'] = game['teams']['home']['leagueRecord']['losses']

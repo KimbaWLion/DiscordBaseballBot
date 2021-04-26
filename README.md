@@ -114,6 +114,7 @@ DiscordBaseballBot (directory)
 # Changelog
 * 4-25-21
   * bugfix for no game today status with new API call
+  * bugfix for no runs in linescore
 * 4-24-21
   * bugfix for doubleheaders
   * better README instructions
