@@ -112,6 +112,8 @@ DiscordBaseballBot (directory)
   * In your settings.json file, use forward slashes not backslashes
 
 # Changelog
+* 4-30-21
+  * bugfix if pitcher was just called up and is not in mlb.com's systems
 * 4-25-21
   * bugfix for no game today status with new API call
   * bugfix for no runs in linescore

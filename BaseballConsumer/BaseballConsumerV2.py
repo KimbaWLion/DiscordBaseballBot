@@ -279,8 +279,11 @@ class BaseballUpdaterBotV2:
             gameStatusPost = constants.PREGAME_BODY
 
         if gameStatus == 'Warmup':
-            awayStartingPitcherData = statsapi.player_stat_data(awayTeamInfo['probable_pitcher_id'], group="pitching", type="season")['stats'][0]['stats']
-            homeStartingPitcherData = statsapi.player_stat_data(homeTeamInfo['probable_pitcher_id'], group="pitching", type="season")['stats'][0]['stats']
+            nullPitcherData = {'wins': '---', 'losses': '---', 'era': '---'} # This is if the pitcher was just called up and aren't in MLB.com's system yet
+            awayStartingPitcher = statsapi.player_stat_data(awayTeamInfo['probable_pitcher_id'], group="pitching", type="season")
+            homeStartingPitcher = statsapi.player_stat_data(homeTeamInfo['probable_pitcher_id'], group="pitching", type="season")
+            awayStartingPitcherData = awayStartingPitcher['stats'][0]['stats'] if awayStartingPitcher['stats'] else nullPitcherData
+            homeStartingPitcherData = homeStartingPitcher['stats'][0]['stats'] if homeStartingPitcher['stats'] else nullPitcherData
 
             pregamePost = "{} Pitcher: {} ({}-{} {})\n" \
                           "{} Pitcher: {} ({}-{} {})".format(
