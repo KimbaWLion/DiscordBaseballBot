@@ -110,6 +110,9 @@ DiscordBaseballBot (directory)
   * Just run the program again, it's a transient issue.
 * I am getting a `json.decoder.JSONDecodeError: Invalid \escape: line 2 column 27 (char 28)` error, how do I fix?
   * In your settings.json file, use forward slashes not backslashes
+* How do I get my bot to post emojis?
+  * https://gist.github.com/scragly/b8d20aece2d058c8c601b44a689a47a0
+  * Note that emoji cannot be in the embedded object
 
 # Changelog
 * 4-30-21
