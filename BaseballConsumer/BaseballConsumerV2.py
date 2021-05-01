@@ -479,7 +479,8 @@ class BaseballUpdaterBotV2:
         for earnedRunsNotRBIs in range(info['runsEarned'] - info['rbis']):
             emoji = ''.join([emoji, constants.EMOTE_EARNED_RUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_EARNED_RUN, " "])
         # Unearned runs
-        for unearnedRunsNotRBIs in range(info['runsScored'] - info['rbis']):
+        unearnedRuns = info['runsScored'] - info['rbis'] - info['runsEarned'] if info['runsScored'] - info['rbis'] - info['runsEarned'] > 0 else 0
+        for unearnedRunsNotRBIs in range(unearnedRuns):
             emoji = ''.join([emoji, constants.EMOTE_UNEARNED_RUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_UNEARNED_RUN, " "])
 
         return emoji

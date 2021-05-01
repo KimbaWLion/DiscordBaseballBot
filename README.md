@@ -115,6 +115,8 @@ DiscordBaseballBot (directory)
   * Note that emoji cannot be in the embedded object
 
 # Changelog
+* 5-1-21
+  * bugfix for earned runs not rbis
 * 4-30-21
   * bugfix if pitcher was just called up and is not in mlb.com's systems
 * 4-25-21
