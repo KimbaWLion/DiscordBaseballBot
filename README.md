@@ -115,6 +115,11 @@ DiscordBaseballBot (directory)
   * Note that emoji cannot be in the embedded object
 
 # Changelog
+* 5-15-21
+  * bugfix for no probable pitcher error
+  * bugfix for no linescore error
+  * added delayed start status
+  * added 'left the game' and 'ejected' play types
 * 5-1-21
   * bugfix for earned runs not rbis
 * 4-30-21
@@ -213,6 +218,10 @@ DiscordBaseballBot (directory)
   * Starting a new project, only a readme.  Goal #1 is to get this to post to a discord server of my choosing.
 
 # Buglog
+* 5-15-21
+  * if run scores on a non-bat (like wild pitch), emoji shows up for susequent atbat since same atbat in list
+* 5-3-21
+  * ~~If no probable pitcher, bot fails~~
 * 3-12-18
   * Stolen bases/pickoffs/caugh stealing/wild pitch aren't their own event, so if the bot is behind (even by 1 play), it doesn't do the stolen base
 

@@ -51,19 +51,22 @@ class BaseballUpdaterBotV2:
                     homeTeamInfo = self.lookupTeamInfo(game['teams']['home']['team']['id'])
                     awayTeamInfo = self.lookupTeamInfo(game['teams']['away']['team']['id'])
                     # Add current game score
-                    # Note, runs isn't always populated :(
-                    homeTeamInfo['game_score'] = game['linescore']['teams']['home']['runs'] if 'runs' in game['linescore']['teams']['home'] else 0
-                    awayTeamInfo['game_score'] = game['linescore']['teams']['away']['runs'] if 'runs' in game['linescore']['teams']['away'] else 0
-                    # Add team records
+                    # Note, linescore isn't always populated :(
+                    try: homeTeamInfo['game_score'] = game['linescore']['teams']['home']['runs']
+                    except KeyError: homeTeamInfo['game_score'] = 0
+                    try: awayTeamInfo['game_score'] = game['linescore']['teams']['away']['runs']
+                    except KeyError: awayTeamInfo['game_score'] = 0
+
+                        # Add team records
                     homeTeamInfo['wins'] = game['teams']['home']['leagueRecord']['wins']
                     homeTeamInfo['losses'] = game['teams']['home']['leagueRecord']['losses']
                     awayTeamInfo['wins'] = game['teams']['away']['leagueRecord']['wins']
                     awayTeamInfo['losses'] = game['teams']['away']['leagueRecord']['losses']
                     # Add pitcher data
-                    homeTeamInfo['probable_pitcher_name'] = game['teams']['home']['probablePitcher']['fullName']
-                    homeTeamInfo['probable_pitcher_id'] = game['teams']['home']['probablePitcher']['id']
-                    awayTeamInfo['probable_pitcher_name'] = game['teams']['away']['probablePitcher']['fullName']
-                    awayTeamInfo['probable_pitcher_id'] = game['teams']['away']['probablePitcher']['id']
+                    homeTeamInfo['probable_pitcher_name'] = game['teams']['home']['probablePitcher']['fullName'] if 'probablePitcher' in game['teams']['home'] else ''
+                    homeTeamInfo['probable_pitcher_id'] = game['teams']['home']['probablePitcher']['id'] if 'probablePitcher' in game['teams']['home'] else ''
+                    awayTeamInfo['probable_pitcher_name'] = game['teams']['away']['probablePitcher']['fullName'] if 'probablePitcher' in game['teams']['away'] else ''
+                    awayTeamInfo['probable_pitcher_id'] = game['teams']['away']['probablePitcher']['id'] if 'probablePitcher' in game['teams']['away'] else ''
 
                     # First, check if the game status has changed
                     gameStatus = game['status']['detailedState']
@@ -81,6 +84,8 @@ class BaseballUpdaterBotV2:
                         gameStatusWaitTime = 60
                     if gameStatus == 'Warmup':
                         gameStatusWaitTime = 60
+                    if "Delayed Start" in gameStatus:
+                        gameStatusWaitTime = 300
                     if gameStatus == 'In Progress':
                         gameStatusWaitTime = 10
                     if 'Manager challenge' in gameStatus:
@@ -247,6 +252,8 @@ class BaseballUpdaterBotV2:
         if "Game Advisory" in description: return "gameAdvisory"
         if "Umpire Substitution" in description: return "umpireSubstitution"
         if "Injury Delay" in description: return "injuryDelay"
+        if "left the game" in description: return "leftTheGame"
+        if "ejected" in description: return "ejected"
         return 'atBat'
 
     async def postNoGameStatusOnDiscord(self, channel):
@@ -296,6 +303,10 @@ class BaseballUpdaterBotV2:
 
             gameStatusEmbed = discord.Embed(title=constants.WARMUP_TITLE, description=pregamePost)
             gameStatusPost = constants.WARMUP_BODY
+
+        if "Delayed Start" in gameStatus:
+            gameStatusEmbed = discord.Embed(title=constants.DELAYEDSTART_TITLE, description=constants.DELAYEDSTART_DESCRIPTION)
+            gameStatusPost = constants.DELAYEDSTART_BODY
 
         # Specifically for Game Started (only goes first time game becomes "In Progress"
         if gameStatus == 'In Progress':
