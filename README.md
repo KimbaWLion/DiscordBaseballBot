@@ -115,9 +115,13 @@ DiscordBaseballBot (directory)
   * Note that emoji cannot be in the embedded object
 
 # Changelog
+* 7-21-21
+  * bugfix grand slam emoji is now used
+  * bugfix typo in DELAYEDSTART status
 * 5-15-21
   * bugfix for no probable pitcher error
   * bugfix for no linescore error
+  * bugfix for if run scores on a non-bat (like wild pitch), emoji shows up for subsequent atbat since same atbat in list
   * added delayed start status
   * added 'left the game' and 'ejected' play types
 * 5-1-21
@@ -219,7 +223,7 @@ DiscordBaseballBot (directory)
 
 # Buglog
 * 5-15-21
-  * if run scores on a non-bat (like wild pitch), emoji shows up for susequent atbat since same atbat in list
+  * ~~if run scores on a non-bat (like wild pitch), emoji shows up for subsequent atbat since same atbat in list~~
 * 5-3-21
   * ~~If no probable pitcher, bot fails~~
 * 3-12-18

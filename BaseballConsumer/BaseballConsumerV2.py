@@ -478,21 +478,23 @@ class BaseballUpdaterBotV2:
         ## Batting emoji
         favTeamIsBatting = (self.checkIfFavoriteTeam(info['homeTeamId']) and self.homeTeamBatting(info)) or (self.checkIfFavoriteTeam(info['awayTeamId']) and not self.homeTeamBatting(info))
         # Grand Slam
-        if info['event'] == 'Home Run' and info['rbi'] == '4': # "grand slam" in info['description']:
+        if info['event'] == 'Home Run' and info['rbi'] == 4: # "grand slam" in info['description']:
             emoji = ''.join([emoji, constants.EMOTE_GRAND_SLAM if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_GRAND_SLAM, "\n"])
         # Home Run
-        elif info['event'] == 'Home Run' and info['rbi'] != '4': # ("homers" in info['description']) or ("home run" in info['description']):
+        elif info['event'] == 'Home Run' and info['rbi'] != 4: # ("homers" in ) or ("home run" in info['description']):
             emoji = ''.join([emoji, constants.EMOTE_HOMERUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_HOMERUN, "\n"])
         # RBIs
         for rbis in range(info['rbis']):
             emoji = ''.join([emoji, constants.EMOTE_RBI if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_RBI, " "])
-        # Earned runs that are not RBIs (run scores on GIDP)
-        for earnedRunsNotRBIs in range(info['runsEarned'] - info['rbis']):
-            emoji = ''.join([emoji, constants.EMOTE_EARNED_RUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_EARNED_RUN, " "])
-        # Unearned runs
-        unearnedRuns = info['runsScored'] - info['rbis'] - info['runsEarned'] if info['runsScored'] - info['rbis'] - info['runsEarned'] > 0 else 0
-        for unearnedRunsNotRBIs in range(unearnedRuns):
-            emoji = ''.join([emoji, constants.EMOTE_UNEARNED_RUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_UNEARNED_RUN, " "])
+
+        if 'scores' in info['description']:  # Bugfix for if a batter scores on a stolen base or wild pitch, because the atbat still has a run scored even if the batter pops out
+            # Earned runs that are not RBIs (run scores on GIDP)
+            for earnedRunsNotRBIs in range(info['runsEarned'] - info['rbis']):
+                emoji = ''.join([emoji, constants.EMOTE_EARNED_RUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_EARNED_RUN, " "])
+            # Unearned runs
+            unearnedRuns = info['runsScored'] - info['rbis'] - info['runsEarned'] if info['runsScored'] - info['rbis'] - info['runsEarned'] > 0 else 0
+            for unearnedRunsNotRBIs in range(unearnedRuns):
+                emoji = ''.join([emoji, constants.EMOTE_UNEARNED_RUN if favTeamIsBatting else constants.EMOTE_OTHER_TEAM_UNEARNED_RUN, " "])
 
         return emoji
 
