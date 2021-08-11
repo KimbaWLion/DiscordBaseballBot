@@ -115,6 +115,10 @@ DiscordBaseballBot (directory)
   * Note that emoji cannot be in the embedded object
 
 # Changelog
+* 8-11-21
+  * bugfix Suspended: Rain status
+* 7-27-21
+  * bugfix EMOTE_OTHER_TEAM_GRAND_SLAM typo
 * 7-21-21
   * bugfix grand slam emoji is now used
   * bugfix typo in DELAYEDSTART status

@@ -317,6 +317,10 @@ class BaseballUpdaterBotV2:
             gameStatusEmbed = discord.Embed(title=constants.RAINDELAY_TITLE, description=constants.RAINDELAY_DESCRIPTION)
             gameStatusPost = constants.RAINDELAY_BODY
 
+        if gameStatus == 'Suspended: Rain':
+            gameStatusEmbed = discord.Embed(title=constants.SUSPENDEDRAIN_TITLE, description=constants.SUSPENDEDRAIN_DESCRIPTION)
+            gameStatusPost = constants.SUSPENDEDRAIN_BODY
+
         if gameStatus == 'Completed Early: Rain':
             gameStatusEmbed = discord.Embed(title=constants.COMPLETEDEARLYRAIN_TITLE, description=constants.COMPLETEDEARLYRAIN_DESCRIPTION)
             gameStatusPost = constants.COMPLETEDEARLYRAIN_BODY
