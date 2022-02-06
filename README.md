@@ -115,6 +115,9 @@ DiscordBaseballBot (directory)
   * Note that emoji cannot be in the embedded object
 
 # Changelog
+* 2-5-22
+  * bugfix: Suspended games that were restarted on as a doubleheader were not picked up before.  They are now posted as expected.
+  * If bot runs into a disconnection error, this makes it so the bot doesn't close, just waits before trying to connect again.
 * 8-11-21
   * bugfix Suspended: Rain status
 * 7-27-21
