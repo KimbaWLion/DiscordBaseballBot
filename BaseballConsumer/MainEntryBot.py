@@ -48,8 +48,13 @@ async def my_background_task():
 
     channel = client.get_channel(int(DISCORD_GAME_THREAD_CHANNEL_ID))
     while not client.is_closed():
-        await baseballUpdaterBotV2.run(client, channel)
-        # sleep exists in run() method
+        try:
+            await baseballUpdaterBotV2.run(client, channel)
+            # sleep exists in run() method
+        except (aiohttp.client_exceptions.ClientConnectorError, requests.exceptions.ConnectionError, urllib3.exceptions.MaxRetryError, urllib3.exceptions.NewConnectionError, OSError) as e:
+            print("timeout error trying something: ", e)
+            await asyncio.sleep(60)
+
 
 
 @client.event
